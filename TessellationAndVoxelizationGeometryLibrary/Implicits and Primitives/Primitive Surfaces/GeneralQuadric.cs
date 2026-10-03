@@ -393,12 +393,64 @@ namespace TVGL
         /// <summary>
         /// Finds the closest signed distance between the given point and the quadric.
         /// </summary>
-        /// <param name="point"></param>
-        /// <returns></returns>
+        /// <param name="point">The point from which the closest surface point is sought.</param>
+        /// <returns>The closest point found on the quadric surface.</returns>
+        public Vector3 ClosestPointOnSurfaceToPoint(Vector3 point, Vector3 startingPt)
+        {
+            //if (GetNormalAtPoint(point).Length() == 0) return 0; //scaling the quadric value by the norm of the normal vector to get the approximate distance locally, not working all the time
+            //return QuadricValue(point) / GetNormalAtPoint(point).Length();
+            
+            var closestPt = GetNearbyPointOnQuadric(point);
+            if (startingPt != null) closestPt = startingPt;
+            var closestPt4 = new Vector4(closestPt, 0); // the fourth number "w" here represents the Lagrange multiplier
+            var delta = Vector4.Zero;
+            int iterations = 0;
+            do // run a condensed SQP algorithm
+            {
+                var hessian = new Matrix4x4(
+                    2 + 2 * XSqdCoeff * closestPt4.W, XYCoeff * closestPt4.W, XZCoeff * closestPt4.W, 2 * XSqdCoeff * closestPt4.X + XYCoeff * closestPt4.Y + XZCoeff * closestPt4.Z + XCoeff,
+                    XYCoeff * closestPt4.W, 2 + 2 * YSqdCoeff * closestPt4.W, YZCoeff * closestPt4.W, 2 * YSqdCoeff * closestPt4.Y + XYCoeff * closestPt4.X + YZCoeff * closestPt4.Z + YCoeff,
+                    XZCoeff * closestPt4.W, YZCoeff * closestPt4.W, 2 + 2 * ZSqdCoeff * closestPt4.W, 2 * ZSqdCoeff * closestPt4.Z + XZCoeff * closestPt4.X + YZCoeff * closestPt4.Y + ZCoeff,
+                    2 * XSqdCoeff * closestPt4.X + XYCoeff * closestPt4.Y + XZCoeff * closestPt4.Z + XCoeff, 2 * YSqdCoeff * closestPt4.Y + XYCoeff * closestPt4.X + YZCoeff * closestPt4.Z + YCoeff, 2 * ZSqdCoeff * closestPt4.Z + XZCoeff * closestPt4.X + YZCoeff * closestPt4.Y + ZCoeff, 0);
+                var rhs = new Vector4(
+                    2 * (closestPt4.X - point.X) + closestPt4.W * (2 * XSqdCoeff * closestPt4.X + XYCoeff * closestPt4.Y + XZCoeff * closestPt4.Z + XCoeff),
+                    2 * (closestPt4.Y - point.Y) + closestPt4.W * (2 * YSqdCoeff * closestPt4.Y + XYCoeff * closestPt4.X + YZCoeff * closestPt4.Z + YCoeff),
+                    2 * (closestPt4.Z - point.Z) + closestPt4.W * (2 * ZSqdCoeff * closestPt4.Z + XZCoeff * closestPt4.X + YZCoeff * closestPt4.Y + ZCoeff),
+                    QuadricValue(closestPt4.ToVector3(false)));
+                delta = hessian.Solve(rhs);
+                if (hessian.FrobeniusNorm() > 1E20)
+                {
+                    closestPt4 = new Vector4(closestPt, -1 * Math.Sign(closestPt4.W));
+                    continue;
+                }
+                // add the negative to the previous point to get an updated point
+                closestPt4 -= delta;
+            }
+            while (iterations++ < 1000 && delta.ToVector3(false).LengthSquared() > 1E-4); // while less than 1000 iterations or the delta is large
+            if (iterations >= 1000 && GetNormalAtPoint(point).Length() != 0) return Vector3.Null;
+            closestPt = closestPt4.ToVector3(false);
+            return closestPt;
+        }
+
+
+        /// <summary>Calculates the signed distance from a point to the quadric surface.</summary>
+        /// <param name="point">The point whose distance is required.</param>
+        /// <returns>The signed distance; the sign follows the quadric's inside/outside convention.</returns>
+        public double DistanceToPoint(Vector3 point, Vector3 startingPt)
+        {
+            Vector3 closestPt = ClosestPointOnSurfaceToPoint(point, startingPt);
+
+            //scaling the quadric value by the norm of the normal vector to get the approximate distance locally
+            if (closestPt.IsNull()) return DistanceToPointQuick(point);
+
+            return Math.Sign(QuadricValue(point)) * point.Distance(closestPt);
+        }
+
         public override Vector3 ClosestPointOnSurfaceToPoint(Vector3 point)
         {
             //if (GetNormalAtPoint(point).Length() == 0) return 0; //scaling the quadric value by the norm of the normal vector to get the approximate distance locally, not working all the time
             //return QuadricValue(point) / GetNormalAtPoint(point).Length();
+
             var closestPt = GetNearbyPointOnQuadric(point);
             var closestPt4 = new Vector4(closestPt, 0); // the fourth number "w" here represents the Lagrange multiplier
             var delta = Vector4.Zero;
