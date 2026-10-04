@@ -31,6 +31,11 @@ namespace TVGLUnitTestsAndBenchmarking
                 RunStepImporterTest();
                 return;
             }
+            if (string.Equals(args.FirstOrDefault(), "test-gltf", StringComparison.OrdinalIgnoreCase))
+            {
+                Misc_Tests.GLTFTests.RunAllTests();
+                return;
+            }
             OutputServices.Presenter2D = new Presenter2D();
             OutputServices.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
