@@ -10,7 +10,6 @@ namespace TVGLUnitTestsAndBenchmarking
     public class PolygonBooleanTester
     {
         //[Benchmark]
-        [ArgumentsSource(nameof(Data))]
         public static List<Polygon> TVGLUnion(Polygon polygon1, Polygon polygon2)
             => TVGL.PolygonOperations.Union(polygon1, polygon2, PolygonCollection.SeparateLoops);
 
