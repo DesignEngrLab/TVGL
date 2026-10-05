@@ -86,6 +86,19 @@ namespace TVGLUnitTestsAndBenchmarking
                 if (solid.NumberOfFaces < 12)
                     throw new Exception($"Unexpectedly low face count: {solid.NumberOfFaces}");
 
+                using (var stream = File.OpenRead(tempPath))
+                {
+                    var streamSolids = STEP.OpenSolids(
+                        stream, "stream-test.step", linearDeflection: 0.1, angularDeflection: 0.5);
+                    if (streamSolids.Length != 1)
+                        throw new Exception($"STEP stream import expected 1 solid, got {streamSolids.Length}.");
+                    if (streamSolids[0].NumberOfVertices != solid.NumberOfVertices ||
+                        streamSolids[0].NumberOfFaces != solid.NumberOfFaces)
+                    {
+                        throw new Exception("STEP stream import did not match the file import geometry.");
+                    }
+                }
+
                 // Theoretical volume: Box (50*40*30 = 60000) - Cylinder (pi*10^2*30 = 9424.778) = 50575.222
                 double expectedVolume = 50.0 * 40.0 * 30.0 - Math.PI * 10.0 * 10.0 * 30.0;
                 double actualVolume = solid.Volume;

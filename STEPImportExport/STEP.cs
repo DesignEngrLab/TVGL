@@ -47,9 +47,9 @@ namespace TVGL.STEPImportExport
         /// <param name="linearDeflection">Linear deflection (chordal error) tolerance for meshing.</param>
         /// <param name="angularDeflection">Angular deflection tolerance for meshing in radians.</param>
         /// <param name="buildOptions">Optional TVGL build options (e.g. repairs, duplicate checks).</param>
-        /// <returns>A list of imported TessellatedSolids.</returns>
+        /// <returns>An array of imported TessellatedSolids.</returns>
         /// <exception cref="FileNotFoundException">Thrown when filePath does not exist.</exception>
-        public static List<TessellatedSolid> OpenSolids(
+        public static TessellatedSolid[] OpenSolids(
             string filePath,
             double linearDeflection = DefaultLinearDeflection,
             double angularDeflection = DefaultAngularDeflection,
@@ -60,7 +60,7 @@ namespace TVGL.STEPImportExport
 
             var handle = NativeMethods.StepModel_Load(filePath, linearDeflection, angularDeflection);
             if (handle == IntPtr.Zero)
-                return new List<TessellatedSolid>();
+                return Array.Empty<TessellatedSolid>();
 
             try
             {
@@ -70,6 +70,52 @@ namespace TVGL.STEPImportExport
             finally
             {
                 NativeMethods.StepModel_Free(handle);
+            }
+        }
+
+        /// <summary>
+        /// Reads a STEP stream and returns all distinct TessellatedSolids contained within it.
+        /// </summary>
+        /// <param name="s">The input stream containing STEP data.</param>
+        /// <param name="filePath">The source path or filename used to name the imported solids.</param>
+        /// <param name="linearDeflection">Linear deflection (chordal error) tolerance for meshing.</param>
+        /// <param name="angularDeflection">Angular deflection tolerance for meshing in radians.</param>
+        /// <param name="buildOptions">Optional TVGL build options (e.g. repairs, duplicate checks).</param>
+        /// <returns>An array of imported TessellatedSolids.</returns>
+        public static TessellatedSolid[] OpenSolids(Stream s, string filePath,
+            double linearDeflection = DefaultLinearDeflection,
+            double angularDeflection = DefaultAngularDeflection,
+            TessellatedSolidBuildOptions? buildOptions = null)
+        {
+            ArgumentNullException.ThrowIfNull(s);
+
+            var temporaryFilePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.step");
+            try
+            {
+                using (var temporaryFile = new FileStream(
+                    temporaryFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                {
+                    s.CopyTo(temporaryFile);
+                }
+
+                var handle = NativeMethods.StepModel_Load(
+                    temporaryFilePath, linearDeflection, angularDeflection);
+                if (handle == IntPtr.Zero)
+                    return Array.Empty<TessellatedSolid>();
+
+                try
+                {
+                    var fileName = Path.GetFileName(filePath);
+                    return STEPReconstructor.ReconstructSolids(handle, fileName, buildOptions);
+                }
+                finally
+                {
+                    NativeMethods.StepModel_Free(handle);
+                }
+            }
+            finally
+            {
+                File.Delete(temporaryFilePath);
             }
         }
 

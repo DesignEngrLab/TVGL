@@ -64,6 +64,14 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
                 Console.WriteLine($"   [GLTF] Faces: {loadedGltf.NumberOfFaces}, Vertices: {loadedGltf.NumberOfVertices}, Volume: {volGltf:F2} (err: {errGltf:P3})");
                 if (errGltf > 0.01)
                     throw new Exception($"Volume mismatch on .gltf reload: actual {volGltf} vs expected {expectedVolume}");
+
+                using var gltfStream = File.OpenRead(tempGltf);
+                var loadedGltfStream = GLTF.OpenSolids(gltfStream, tempGltf).FirstOrDefault();
+                if (loadedGltfStream == null)
+                    throw new Exception("GLTF.OpenSolids returned no solids for a .gltf stream.");
+                var streamError = Math.Abs(loadedGltfStream.Volume - expectedVolume) / expectedVolume;
+                if (streamError > 0.01)
+                    throw new Exception($"Volume mismatch on .gltf stream reload: actual {loadedGltfStream.Volume} vs expected {expectedVolume}");
             }
             finally
             {
@@ -134,9 +142,9 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
 
                 // Test OpenSolids
                 var worldSolids = GLTF.OpenSolids(tempGlb);
-                Console.WriteLine($"   Loaded World Solids count: {worldSolids.Count}");
-                if (worldSolids.Count != 2)
-                    throw new Exception($"Expected 2 world solids, got {worldSolids.Count}");
+                Console.WriteLine($"   Loaded World Solids count: {worldSolids.Length}");
+                if (worldSolids.Length != 2)
+                    throw new Exception($"Expected 2 world solids, got {worldSolids.Length}");
 
                 foreach (var s in worldSolids)
                 {
@@ -163,8 +171,8 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
             if (!saved) throw new Exception("GLTF.Save to Stream failed.");
 
             ms.Position = 0;
-            var loaded = GLTF.Open(ms);
-            if (loaded == null) throw new Exception("GLTF.Open from Stream returned null.");
+            var loaded = GLTF.OpenSolids(ms, "stream.glb").FirstOrDefault();
+            if (loaded == null) throw new Exception("GLTF.OpenSolids from Stream returned no solids.");
 
             double vol = loaded.Volume;
             double err = Math.Abs(vol - expectedVolume) / expectedVolume;
@@ -184,8 +192,8 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
 
             Console.WriteLine("5. Testing third-party model import (Example1.glb)...");
             var solids = GLTF.OpenSolids(examplePath);
-            Console.WriteLine($"   Imported solids from Example1.glb: {solids.Count}");
-            if (solids.Count == 0)
+            Console.WriteLine($"   Imported solids from Example1.glb: {solids.Length}");
+            if (solids.Length == 0)
                 throw new Exception("Failed to import any solids from Example1.glb");
 
             foreach (var s in solids)

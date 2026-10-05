@@ -6,14 +6,14 @@ namespace TVGL.STEPImportExport
 {
     internal static class STEPReconstructor
     {
-        public static List<TessellatedSolid> ReconstructSolids(
+        public static TessellatedSolid[] ReconstructSolids(
             IntPtr handle,
             string fileName,
             TessellatedSolidBuildOptions? buildOptions = null)
         {
             var result = new List<TessellatedSolid>();
             if (handle == IntPtr.Zero)
-                return result;
+                return Array.Empty<TessellatedSolid>();
 
             int bodyCount = NativeMethods.StepModel_GetBodyCount(handle);
             for (int b = 0; b < bodyCount; b++)
@@ -79,7 +79,7 @@ namespace TVGL.STEPImportExport
                 result.Add(solid);
             }
 
-            return result;
+            return result.ToArray();
         }
 
         private static void ReconstructPrimitives(

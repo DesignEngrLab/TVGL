@@ -27,14 +27,14 @@ namespace TVGL.GLTFImportExport
             return ModelRoot.ReadGLB(stream);
         }
 
-        public static List<TessellatedSolid> ReconstructSolids(
+        public static TessellatedSolid[] ReconstructSolids(
             ModelRoot model,
             string fileName = "",
             TessellatedSolidBuildOptions? buildOptions = null)
         {
             var result = new List<TessellatedSolid>();
             if (model.LogicalMeshes.Count == 0)
-                return result;
+                return Array.Empty<TessellatedSolid>();
 
             var scene = model.DefaultScene ?? model.LogicalScenes.FirstOrDefault();
             var nodes = scene != null
@@ -88,7 +88,7 @@ namespace TVGL.GLTFImportExport
                 }
             }
 
-            return result;
+            return result.ToArray();
         }
 
         public static SolidAssembly ReconstructSolidAssembly(

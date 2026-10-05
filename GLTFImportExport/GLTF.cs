@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using SharpGLTF.Schema2;
 
 namespace TVGL.GLTFImportExport
 {
@@ -50,9 +51,9 @@ namespace TVGL.GLTFImportExport
         /// </summary>
         /// <param name="filePath">Path to the .gltf or .glb file.</param>
         /// <param name="buildOptions">Optional TVGL build options (e.g. repairs, duplicate checks).</param>
-        /// <returns>A list of imported TessellatedSolids.</returns>
+        /// <returns>An array of imported TessellatedSolids.</returns>
         /// <exception cref="FileNotFoundException">Thrown when filePath does not exist.</exception>
-        public static List<TessellatedSolid> OpenSolids(
+        public static TessellatedSolid[] OpenSolids(
             string filePath,
             TessellatedSolidBuildOptions? buildOptions = null)
         {
@@ -65,11 +66,33 @@ namespace TVGL.GLTFImportExport
         /// Reads a glTF or binary glTF stream and returns all distinct TessellatedSolids
         /// positioned in their global scene coordinates.
         /// </summary>
+        /// <param name="s">The input stream containing glTF or GLB data.</param>
+        /// <param name="filePath">The source path or filename used to name the imported solids.</param>
+        /// <param name="buildOptions">Optional TVGL build options (e.g. repairs, duplicate checks).</param>
+        /// <returns>An array of imported TessellatedSolids.</returns>
+        public static TessellatedSolid[] OpenSolids(Stream s, string filePath,
+            TessellatedSolidBuildOptions? buildOptions = null)
+        {
+            ArgumentNullException.ThrowIfNull(s);
+            ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+
+            var model = string.Equals(Path.GetExtension(filePath), ".gltf", StringComparison.OrdinalIgnoreCase)
+                ? ReadContext.CreateFromDirectory(
+                    new FileInfo(Path.GetFullPath(filePath)).Directory!).ReadTextSchema2(s)
+                : GLTFReconstructor.LoadModel(s);
+            var fileName = Path.GetFileName(filePath);
+            return GLTFReconstructor.ReconstructSolids(model, fileName, buildOptions);
+        }
+
+        /// <summary>
+        /// Reads a glTF or binary glTF stream and returns all distinct TessellatedSolids
+        /// positioned in their global scene coordinates.
+        /// </summary>
         /// <param name="stream">The input stream containing glTF or GLB data.</param>
         /// <param name="buildOptions">Optional TVGL build options.</param>
         /// <param name="name">Optional name associated with the stream source.</param>
-        /// <returns>A list of imported TessellatedSolids.</returns>
-        public static List<TessellatedSolid> OpenSolids(
+        /// <returns>An array of imported TessellatedSolids.</returns>
+        public static TessellatedSolid[] OpenSolids(
             Stream stream,
             TessellatedSolidBuildOptions? buildOptions = null,
             string name = "")
