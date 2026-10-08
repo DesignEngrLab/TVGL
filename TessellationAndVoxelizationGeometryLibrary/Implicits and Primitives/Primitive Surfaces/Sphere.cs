@@ -365,14 +365,14 @@ namespace TVGL
         }
 
         public static Sphere FitToVertices(double maxRadius, IEnumerable<Vector3> points, Vector3 firstNormal
-            , out double maxError)
+            , out double error)
         {
-            maxError = double.MaxValue;
+            error = double.MaxValue;
             if (DefineSphereFromVertices(points, out var sphereCenter, out var sphereRadius)
                 && sphereRadius < maxRadius && !SphereIsTooFlat(sphereCenter, points))
             {
                 var primitiveSurface = new Sphere(sphereCenter, sphereRadius, (points.First() - sphereCenter).Dot(firstNormal) > 0);
-                maxError = primitiveSurface.CalculateMaxError(points);
+                error = primitiveSurface.CalculateMeanSquareError(points);
                 return primitiveSurface;
             }
             return null;
