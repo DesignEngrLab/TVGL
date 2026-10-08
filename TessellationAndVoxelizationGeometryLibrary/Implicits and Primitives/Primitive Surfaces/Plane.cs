@@ -652,7 +652,7 @@ namespace TVGL
                 planeNormal = -planeNormal;
             }
             var primitiveSurface = new Plane(distanceToPlane, planeNormal);
-            maxError = primitiveSurface.CalculateMaxError(points);
+            maxError = primitiveSurface.CalculateMeanSquareError(points);
             return primitiveSurface;
         }
     }
