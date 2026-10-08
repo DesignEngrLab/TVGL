@@ -296,7 +296,7 @@ namespace TVGL
             get
             {
                 if (_polygon == null)
-                    _polygon = new Polygon(OwnedPrimitive.TransformFrom3DTo2D(GetCoordinates(), IsClosed));
+                    _polygon = new Polygon(OwnedPrimitive.TransformFrom3DTo2D(GetCoordinates()));
                 return _polygon;
             }
         }

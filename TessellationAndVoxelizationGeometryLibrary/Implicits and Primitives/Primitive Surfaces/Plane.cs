@@ -561,7 +561,7 @@ namespace TVGL
         /// <param name="points">The points.</param>
         /// <param name="pathIsClosed">if set to <c>true</c> [path is closed].</param>
         /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
-        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
         {
             foreach (var point in points)
             {
@@ -640,9 +640,9 @@ namespace TVGL
         /// <param name="points"></param>
         /// <param name="normalGuess"></param>
         /// <returns></returns>
-        public static Plane FitToVertices(IEnumerable<Vector3> points, Vector3 normalGuess, out double maxError)
+        public static Plane FitToVertices(IEnumerable<Vector3> points, Vector3 normalGuess, out double error)
         {
-            maxError = double.MaxValue;
+            error = double.MaxValue;
             if (!DefineNormalAndDistanceFromVertices(points, out var distanceToPlane, out var planeNormal))
                 return null;
 
@@ -652,7 +652,7 @@ namespace TVGL
                 planeNormal = -planeNormal;
             }
             var primitiveSurface = new Plane(distanceToPlane, planeNormal);
-            maxError = primitiveSurface.CalculateMaxError(points);
+            error = primitiveSurface.CalculateMeanSquareError (points);
             return primitiveSurface;
         }
     }

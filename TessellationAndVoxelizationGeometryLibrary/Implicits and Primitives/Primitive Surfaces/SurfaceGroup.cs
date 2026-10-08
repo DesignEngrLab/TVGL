@@ -174,7 +174,7 @@ namespace TVGL
                 face.Color = color;
         }
 
-        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
         {
             throw new NotImplementedException();
         }

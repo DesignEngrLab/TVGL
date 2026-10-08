@@ -13,6 +13,7 @@
 // ***********************************************************************
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 
@@ -47,33 +48,33 @@ namespace TVGL
             // but this is not correct since M11 is often non-unity during rotation
         }
 
-        private Vector3 FaceXDir
+        private Vector3 PerpXDir
         {
             get
             {
-                if (faceXDir.IsNull())
-                    faceXDir = Axis.GetPerpendicularDirection();
-                return faceXDir;
+                if (perpXDir.IsNull())
+                    perpXDir = Axis.GetPerpendicularDirection();
+                return perpXDir;
             }
         }
         /// <summary>
         /// The face x dir
         /// </summary>
-        private Vector3 faceXDir = Vector3.Null;
+        private Vector3 perpXDir = Vector3.Null;
 
-        private Vector3 FaceYDir
+        private Vector3 PerpYDir
         {
             get
             {
-                if (faceYDir.IsNull())
-                    faceYDir = Axis.Cross(FaceXDir);
-                return faceYDir;
+                if (perpYDir.IsNull())
+                    perpYDir = Axis.Cross(PerpXDir);
+                return perpYDir;
             }
         }
         /// <summary>
         /// The face y dir
         /// </summary>
-        private Vector3 faceYDir = Vector3.Null;
+        private Vector3 perpYDir = Vector3.Null;
 
         /// <summary>
         /// Transforms the from 3d to 2d.
@@ -83,8 +84,8 @@ namespace TVGL
         public override Vector2 TransformFrom3DTo2D(Vector3 point)
         {
             var v = point - Anchor;
-            var x = FaceXDir.Dot(v);
-            var y = FaceYDir.Dot(v);
+            var x = PerpXDir.Dot(v);
+            var y = PerpYDir.Dot(v);
             var angle = Math.Atan2(y, x);
 
             return new Vector2(angle * Radius, v.Dot(Axis));
@@ -97,9 +98,9 @@ namespace TVGL
         /// <returns>Vector3.</returns>
         public override Vector3 TransformFrom2DTo3D(Vector2 point)
         {
-            var angle = (point.X / Radius) % Constants.TwoPi;
-            var result = Anchor + Radius * Math.Cos(angle) * FaceXDir;
-            result += Radius * Math.Sin(angle) * FaceYDir;
+            var angle = (point.X / Radius) % Math.Tau;
+            var result = Anchor + Radius * Math.Cos(angle) * PerpXDir;
+            result += Radius * Math.Sin(angle) * PerpYDir;
             result += point.Y * Axis;
             return result;
         }
@@ -110,24 +111,15 @@ namespace TVGL
         /// <param name="points">The points.</param>
         /// <param name="pathIsClosed">if set to <c>true</c> [path is closed].</param>
         /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
-        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
         {
-            // when the points are a closed path and they encircle the axis, basically we see the simplest resulting
-            // polygon as a circle. Perhaps this doesn't capture what was intended but it is the best choice given
-            // alternatives
-            if (pathIsClosed && points.BorderEncirclesAxis(Axis, Anchor))
-            {
-                var transform = Axis.TransformToXYPlane(out _);
-                foreach (var point in points)
-                    yield return point.ConvertTo2DCoordinates(transform);
-                yield break;
-            }
             // the cylinder will be unrolled, and the tangential angle around the cylinder will be transformed
-            // into the x (horizontal coordinate). The first point is provides a reference for the additional points
-            var horizRepeat = Radius * Constants.TwoPi;
+            // into the x (horizontal coordinate). The first point provides a reference for the additional points
+            var horizRepeat = Radius * Math.Tau;
             // the first point is called the prevPoint, just to set up the following loop - so that the previous
             // visited point is always known when processing each subsequent point.
             var prevPoint = points.First();
+            // by setting the perpXDir vector here, the x-coordinate of the first result will be 0
             var prev2DVertex = TransformFrom3DTo2D(prevPoint);
             yield return prev2DVertex;
             foreach (var point in points.Skip(1))
@@ -149,7 +141,75 @@ namespace TVGL
                 prev2DVertex = coord2D;
             }
         }
+        public List<Polygon> GetUnrolledPolygons(IEnumerable<IList<Vector3>> pointSets, IEnumerable<bool> IsClosedSet,
+            out List<bool> open)
+        {
+            var result = new List<Polygon>();
+            var polygons = new List<Polygon>();
+            var encirclingLoops = new SortedList<double, List<Vector2>>();
+            open = new List<bool>();
+            var isClosedEnumerator = IsClosedSet.GetEnumerator();
+            var allPolygonsMinX = double.PositiveInfinity;
+            var allPolygonsMaxX = double.NegativeInfinity;
+            foreach (var pointList in pointSets)
+            {
+                // there are 3 types of results:
+                // 1. a closed path that does not encircle the axis. Imagine drawing a loop on the side of the cylinder
+                // 2. a closed path that does encircle the axis - this will be an open polygon where the
+                //    ends are offset by 2π*Radius in the x-direction
+                // 3. an open path - this will be an open polygon
+                var pointList2D = TransformFrom3DTo2D(pointList).ToList();
+                MinX = Math.Min(allPolygonsMinX, pointList2D.Min(v => v.X));
+                MaxX = Math.Max(allPolygonsMaxX, pointList2D.Max(v => v.X));
+                var isClosed = isClosedEnumerator.MoveNext() ? isClosedEnumerator.Current : false;
+                // when the points are a closed path and they encircle the axis
+                var windingAngle = Math.Abs(MiscFunctions.FindWindingAroundAxis(pointList, Axis, Anchor, out _, out _, isClosed));
+                var encirclesAxis = isClosed && windingAngle > 1.67 * Math.PI;
+                if (encirclesAxis)
+                {
+                    // if the shape encircles the axis, then the first and last points should be the same, so we yield
+                    // the first point again to close the path, BUT, it is offset by 2π*Radius in the x-direction,
+                    // so that the shape can be unrolled into a flat polygon
+                    if (pointList2D[^1].X < pointList2D[0].X)
+                        pointList2D.Add(new Vector2(-Radius * Math.Tau + pointList2D[0].X, pointList2D[0].Y));
+                    else
+                        pointList2D.Add(new Vector2(Radius * Math.Tau + pointList2D[0].X, pointList2D[0].Y));
+                    encirclingLoops.Add(pointList2D[0].Y, pointList2D);
+                }
+                else if (isClosed)
+                    polygons.Add(new Polygon(pointList2D, isClosed: true));
+                else
+                {
+                    result.Add(new Polygon(pointList2D, isClosed: false));
+                    open.Add(true);
+                }
 
+
+                // now to handle the encircling loops
+                if (encirclingLoops.Count > 0 && encirclingLoops.Values[0][0].X > encirclingLoops.Values[0][^1].X) // then loop is 
+                    // enclosing the end of the cylinder and we consider it open
+                {
+                    result.Add(new Polygon(encirclingLoops.Values[0], isClosed: true));
+                    open.Add(true);
+                    encirclingLoops.RemoveAt(0);
+                }
+                for (int i = 1; i < encirclingLoops.Count; i += 2)
+                {
+                    polygons.Add(new Polygon(encirclingLoops.Values[i - 1].Concat(encirclingLoops.Values[i]), isClosed: true));
+                }
+                if (int.IsOddInteger(encirclingLoops.Count))
+                {
+                    result.Add(new Polygon(encirclingLoops.Values[^1], isClosed: true));
+                    open.Add(true);
+                }
+                foreach (var poly in polygons.CreateShallowPolygonTrees(false))
+                {
+                    result.Add(poly);
+                    open.Add(false);
+                }
+            }
+            return result;
+        }
         #region Properties
 
 

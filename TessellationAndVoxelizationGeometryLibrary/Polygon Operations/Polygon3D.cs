@@ -12,6 +12,8 @@
 // <summary></summary>
 // ***********************************************************************
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -79,6 +81,7 @@ namespace TVGL
         public IList<IList<Vector3>> Holes { get; set; }
 
         [JsonProperty("Coordinates")]
+        [JsonConverter(typeof(DoubleSequenceJsonConverter))]
         private IEnumerable<double> SerializedCoordinates
         {
             get => Vertices?.ConvertTo1DDoublesCollection();
@@ -86,6 +89,7 @@ namespace TVGL
         }
 
         [JsonProperty("HoleCoordinates")]
+        [JsonConverter(typeof(DoubleSequenceCollectionJsonConverter))]
         private IList<IList<double>> SerializedHoleCoordinates
         {
             get => Holes?.Select(hole => hole.ConvertTo1DDoublesCollection().ToList()).Cast<IList<double>>().ToList();
@@ -181,6 +185,82 @@ namespace TVGL
                 result.Add(new Vector3(values[i], values[i + 1], values[i + 2]));
 
             return result;
+        }
+
+        private static IList<double> ReadDoubleSequence(JToken token)
+        {
+            if (token.Type == JTokenType.Null) return null;
+
+            var values = token as JArray;
+            if (values == null && token is JObject wrapper)
+                values = wrapper["$values"] as JArray;
+            if (values == null)
+                throw new JsonSerializationException("Polygon3D coordinates must be a JSON array.");
+
+            return values.Values<double>().ToList();
+        }
+
+        private sealed class DoubleSequenceJsonConverter : JsonConverter
+        {
+            public override bool CanConvert(Type objectType) =>
+                typeof(IEnumerable<double>).IsAssignableFrom(objectType);
+
+            public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+            {
+                if (value == null)
+                {
+                    writer.WriteNull();
+                    return;
+                }
+
+                writer.WriteStartArray();
+                foreach (var coordinate in (IEnumerable<double>)value)
+                    writer.WriteValue(coordinate);
+                writer.WriteEndArray();
+            }
+
+            public override object ReadJson(JsonReader reader, Type objectType, object existingValue,
+                JsonSerializer serializer) => ReadDoubleSequence(JToken.Load(reader));
+        }
+
+        private sealed class DoubleSequenceCollectionJsonConverter : JsonConverter
+        {
+            public override bool CanConvert(Type objectType) =>
+                typeof(IEnumerable<IEnumerable<double>>).IsAssignableFrom(objectType);
+
+            public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+            {
+                if (value == null)
+                {
+                    writer.WriteNull();
+                    return;
+                }
+
+                writer.WriteStartArray();
+                foreach (var sequence in (IEnumerable<IEnumerable<double>>)value)
+                {
+                    writer.WriteStartArray();
+                    foreach (var coordinate in sequence)
+                        writer.WriteValue(coordinate);
+                    writer.WriteEndArray();
+                }
+                writer.WriteEndArray();
+            }
+
+            public override object ReadJson(JsonReader reader, Type objectType, object existingValue,
+                JsonSerializer serializer)
+            {
+                var token = JToken.Load(reader);
+                if (token.Type == JTokenType.Null) return null;
+
+                var sequences = token as JArray;
+                if (sequences == null && token is JObject wrapper)
+                    sequences = wrapper["$values"] as JArray;
+                if (sequences == null)
+                    throw new JsonSerializationException("Polygon3D hole coordinates must be a JSON array.");
+
+                return sequences.Select(ReadDoubleSequence).ToList();
+            }
         }
     }
 }
