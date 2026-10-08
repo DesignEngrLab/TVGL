@@ -74,7 +74,7 @@ namespace TVGL
         /// <param name="points">The points.</param>
         /// <param name="pathIsClosed">if set to <c>true</c> [path is closed].</param>
         /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
-        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
         {
             var transform = Axis.TransformToXYPlane(out _);
             foreach (var point in points)

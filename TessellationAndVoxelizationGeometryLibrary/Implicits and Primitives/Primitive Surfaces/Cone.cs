@@ -140,11 +140,11 @@ namespace TVGL
         /// <summary>
         /// The face x dir
         /// </summary>
-        private Vector3 faceXDir = Vector3.Null;
+        private Vector3 perpXDir = Vector3.Null;
         /// <summary>
         /// The face y dir
         /// </summary>
-        private Vector3 faceYDir = Vector3.Null;
+        private Vector3 perpYDir = Vector3.Null;
 
         /// <summary>
         /// Transforms the from 3d to 2d.
@@ -154,14 +154,14 @@ namespace TVGL
         public override Vector2 TransformFrom3DTo2D(Vector3 point)
         {
             var v = new Vector3(point.X, point.Y, point.Z) - Apex;
-            if (faceXDir.IsNull())
+            if (perpXDir.IsNull())
             {
-                faceXDir = Axis.GetPerpendicularDirection();
-                faceYDir = faceXDir.Cross(Axis);
+                perpXDir = Axis.GetPerpendicularDirection();
+                perpYDir = perpXDir.Cross(Axis);
             }
             var distanceDownCone = v.Length();
-            var x = faceXDir.Dot(v);
-            var y = faceYDir.Dot(v);
+            var x = perpXDir.Dot(v);
+            var y = perpYDir.Dot(v);
             /* originally doing the following, which makes intuitive sense, but
              * since we take the cosine (and sine) of an Inverse tangent, we can reduce the computation
             var angle = Math.Atan2(y, x) * betaFactor;
@@ -200,67 +200,179 @@ namespace TVGL
             var distanceDownCone = point.Length();
             var radius = sinAperture * distanceDownCone;
             var height = radius / Aperture;
-            if (faceXDir.IsNull())
+            if (perpXDir.IsNull())
             {
-                faceXDir = Axis.GetPerpendicularDirection();
-                faceYDir = faceXDir.Cross(Axis);
+                perpXDir = Axis.GetPerpendicularDirection();
+                perpYDir = perpXDir.Cross(Axis);
             }
             var result = Apex + height * Axis;
-            result += radius * Math.Sin(angle) * faceYDir;
-            result += radius * Math.Sin(angle) * faceYDir;
+            result += radius * Math.Sin(angle) * perpYDir;
+            result += radius * Math.Sin(angle) * perpYDir;
             return result;
         }
 
 
 
         /// <summary>
-        /// Transforms the from 3d points on the cone to a 2d.
+        /// Develops an ordered path on the cone onto a plane without breaking the path when it crosses the
+        /// <see cref="Math.Atan2(double, double)"/> branch cut. Successive points are used to determine which
+        /// revolution of the developed cone each point belongs to, so the result can span any number of turns.
         /// </summary>
-        /// <param name="points">The points.</param>
-        /// <param name="pathIsClosed">if set to <c>true</c> [path is closed].</param>
-        /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
-        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
+        /// <param name="points">The ordered points on the cone.</param>
+        /// <returns>The points on the developed (flattened) cone.</returns>
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
         {
-            // when the points are a closed path and they encircle the axis, then we define the resulting polygon
-            // by looking down the axis of the cone
-            if (pathIsClosed && points.BorderEncirclesAxis(Axis, Apex))
+            // perpXDir and perpYDir form the two-dimensional frame used to measure a point's angle around the
+            // cone axis. They are fixed for this Cone instance, so every call uses the same angular seam.
+            if (perpXDir.IsNull())
             {
-                var transform = Axis.TransformToXYPlane(out _);
-                foreach (var point in points)
-                    yield return point.ConvertTo2DCoordinates(transform);
-                yield break;
+                perpXDir = Axis.GetPerpendicularDirection();
+                perpYDir = perpXDir.Cross(Axis);
             }
-            if (faceXDir.IsNull())
+
+            // Cut the cone to its center and lay it flat. A full 2*pi turn around the 3D
+            // cone occupies only 2*pi*sin(apertureAngle) radians in that flat sector. Instead of
+            // repeating every 2*pi like a cylinder, the sector repeats every 2*pi*sin(apertureAngle).
+            var repeatAngle = Math.Abs(sinAperture) * Math.Tau;
+            var halfRepeatAngle = 0.5 * repeatAngle;
+
+            // Atan2 returns only its principal angle, so the raw developed angle below always lies on the first
+            // copy of the sector. previousUnwrappedAngle remembers which repeated copy the path actually reached.
+            // It starts as NaN because the first point establishes the arbitrary starting revolution.
+            var previousUnwrappedAngle = double.NaN;
+            foreach (var pt in points)
             {
-                faceXDir = Axis.GetPerpendicularDirection();
-                faceYDir = faceXDir.Cross(Axis);
-            }
-            // like a cylinder, we don't want to break the 2D shape just because it doesn't fit on our initial
-            // 2D sheet. Therefore we need to continue the around the polar coordinates when you wrap
-            // around the cone. This is done by keeping tack of the direction of movement from the previous point
-            var halfRepeatAngle = sinAperture * Constants.TwoPi;
-            // the first point is called the prevPoint, just to set up the following loop - so that the previous
-            // visited point is always known when processing each subsequent point.
-            var prevAngle = double.NaN;
-            foreach (var point in points)
-            {
-                var v = new Vector3(point.X, point.Y, point.Z) - Apex;
+                // In the developed cone, distance from the apex is the slant distance. Developing the cone is an
+                // isometry, so this radial coordinate is simply the length of the 3D apex-to-point vector.
+                var pointOnCone = ClosestPointOnSurfaceToPoint(pt);
+                var v = pointOnCone - Apex;
                 var distanceDownCone = v.Length();
-                var x = faceXDir.Dot(v);
-                var y = faceYDir.Dot(v);
-                var angle = Math.Atan2(y, x) * sinAperture;
-                if (!double.IsNaN(prevAngle))
+                // Find the point's azimuth around the 3D cone. Multiplying that azimuth by sinAperture compresses
+                // one full 3D revolution into the angular width of the developed sector described above.
+                var x = perpXDir.Dot(v);
+                var y = perpYDir.Dot(v);
+                var unwrappedAngle = Math.Atan2(y, x) * sinAperture;
+
+                if (!double.IsNaN(previousUnwrappedAngle))
                 {
-                    if (angle - prevAngle > halfRepeatAngle)
-                        angle -= 2 * halfRepeatAngle;
-                    else if (prevAngle - angle > halfRepeatAngle)
-                        angle += halfRepeatAngle;
+                    // Select the equivalent angle on the repeated sector that is closest to the preceding point.
+                    // Crossing the Atan2 seam makes the raw angle jump by one repeatAngle; these loops remove that
+                    // artificial jump. They deliberately use "while", rather than "if": after several turns the
+                    // previous angle can be several repeated sectors away from the principal Atan2 result.
+                    while (unwrappedAngle - previousUnwrappedAngle > halfRepeatAngle)
+                        unwrappedAngle -= repeatAngle;
+                    while (previousUnwrappedAngle - unwrappedAngle > halfRepeatAngle)
+                        unwrappedAngle += repeatAngle;
                 }
-                yield return new Vector2(distanceDownCone * Math.Cos(angle), distanceDownCone * Math.Sin(angle));
-                prevAngle = angle;
+
+                // Convert the unwrapped polar coordinates to ordinary Cartesian coordinates in the flat plane.
+                // As with any sampled angular path, this assumes adjacent points are less than half a revolution
+                // apart; otherwise the intended direction between those two samples is inherently ambiguous.
+                yield return new Vector2(distanceDownCone * Math.Cos(unwrappedAngle),
+                    distanceDownCone * Math.Sin(unwrappedAngle));
+                previousUnwrappedAngle = unwrappedAngle;
             }
         }
 
+        public List<Polygon> GetUnrolledPolygons(IEnumerable<IList<Vector3>> pointSets, IEnumerable<bool> IsClosedSet,
+            out List<bool> open)
+        {
+            var result = new List<Polygon>();
+            var polygons = new List<Polygon>();
+            var encirclingLoops = new List<(double distance, List<Vector2> points, bool isPositive)>();
+            open = new List<bool>();
+            var isClosedEnumerator = IsClosedSet.GetEnumerator();
+            var repeatAngle = Math.Abs(sinAperture) * Math.Tau;
+
+            foreach (var pointList in pointSets)
+            {
+                var isClosed = isClosedEnumerator.MoveNext() ? isClosedEnumerator.Current : false;
+                // there are 3 types of results:
+                // 1. a closed path that does not encircle the axis. Imagine drawing a loop on the side of the cone
+                // 2. a closed path that does encircle the axis - this will be an open path where the
+                //    ends are offset by the cone's repeat angle (2π*sin(apertureAngle)) in polar angle around the apex
+                // 3. an open path - this will be an open polygon
+                var pointList2D = TransformFrom3DTo2D(pointList).ToList();
+                if (pointList2D.Count == 0) continue;
+
+                // when the points are a closed path and they encircle the axis
+                var windingAngle = Math.Abs(MiscFunctions.FindWindingAroundAxis(pointList, Axis, Apex, out _, out _, isClosed));
+                var encirclesAxis = isClosed && windingAngle > 1.67 * Math.PI;
+                if (encirclesAxis)
+                {
+                    // if the shape encircles the axis, then the first and last points should be the same in 3D, so we
+                    // yield the first point again to close the path, BUT rotated by ±repeatAngle around the apex (the origin)
+                    // so that the shape can be unrolled into a flat sector.
+                    var totalAngle = 0.0;
+                    var prevAngle = Math.Atan2(pointList2D[0].Y, pointList2D[0].X);
+                    for (int i = 1; i < pointList2D.Count; i++)
+                    {
+                        var currentAngle = Math.Atan2(pointList2D[i].Y, pointList2D[i].X);
+                        var dTheta = currentAngle - prevAngle;
+                        while (dTheta > Math.PI) dTheta -= Math.Tau;
+                        while (dTheta < -Math.PI) dTheta += Math.Tau;
+                        totalAngle += dTheta;
+                        prevAngle = currentAngle;
+                    }
+                    var isPositive = totalAngle >= 0;
+                    var deltaAngle = isPositive ? repeatAngle : -repeatAngle;
+                    var cos = Math.Cos(deltaAngle);
+                    var sin = Math.Sin(deltaAngle);
+                    var p0 = pointList2D[0];
+                    pointList2D.Add(new Vector2(p0.X * cos - p0.Y * sin, p0.X * sin + p0.Y * cos));
+
+                    // Use distance from the apex (length in 2D) to sort loops along the cone
+                    encirclingLoops.Add((pointList2D[0].Length(), pointList2D, isPositive));
+                }
+                else if (isClosed)
+                    polygons.Add(new Polygon(pointList2D, isClosed: true));
+                else
+                {
+                    result.Add(new Polygon(pointList2D, isClosed: false));
+                    open.Add(true);
+                }
+            }
+
+            // now to handle the encircling loops
+            var sortedLoops = encirclingLoops.OrderBy(l => l.distance).ToList();
+            if (sortedLoops.Count > 0 && !sortedLoops[0].isPositive) // then loop is enclosing the apex of the cone and we consider it open
+            {
+                result.Add(new Polygon(sortedLoops[0].points, isClosed: true));
+                open.Add(true);
+                sortedLoops.RemoveAt(0);
+            }
+            for (int i = 1; i < sortedLoops.Count; i += 2)
+            {
+                var loopA = sortedLoops[i - 1].points;
+                var loopB = sortedLoops[i].points;
+                if (sortedLoops[i].isPositive == sortedLoops[i - 1].isPositive)
+                    loopB = loopB.AsEnumerable().Reverse().ToList();
+
+                var angleAEnd = Math.Atan2(loopA[^1].Y, loopA[^1].X);
+                var angleBStart = Math.Atan2(loopB[0].Y, loopB[0].X);
+                var angleDiff = angleAEnd - angleBStart;
+                var k = (int)Math.Round(angleDiff / repeatAngle);
+                if (k != 0)
+                {
+                    var rot = k * repeatAngle;
+                    var c = Math.Cos(rot);
+                    var s = Math.Sin(rot);
+                    loopB = loopB.Select(p => new Vector2(p.X * c - p.Y * s, p.X * s + p.Y * c)).ToList();
+                }
+                polygons.Add(new Polygon(loopA.Concat(loopB), isClosed: true));
+            }
+            if (int.IsOddInteger(sortedLoops.Count))
+            {
+                result.Add(new Polygon(sortedLoops[^1].points, isClosed: true));
+                open.Add(true);
+            }
+            foreach (var poly in polygons.CreateShallowPolygonTrees(false))
+            {
+                result.Add(poly);
+                open.Add(false);
+            }
+            return result;
+        }
 
 
         /// <summary>

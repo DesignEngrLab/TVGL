@@ -342,7 +342,7 @@ namespace TVGL
                 }
                 otherNeighborAvgNormals = otherNeighborAvgNormals.Divide(numNeighbors);
                 if (ownedNeighborAvgNormals.Cross(otherNeighborAvgNormals).Dot(Vector) < 0)
-                    _internalAngle = Constants.TwoPi;
+                    _internalAngle = Math.Tau;
                 else
                     _internalAngle = 0.0;
             }
@@ -354,7 +354,7 @@ namespace TVGL
                 else //(cross > 0)
                     _internalAngle = Math.PI - Math.Acos(dot);
             }
-            if (InternalAngle > Constants.TwoPi) throw new Exception("not possible");
+            if (InternalAngle > Math.Tau) throw new Exception("not possible");
         }
 
 
@@ -479,7 +479,7 @@ namespace TVGL
         {
             if (Curvature != CurvatureType.Undefined)
                 Curvature = (CurvatureType)(-1 * (int)Curvature);
-            _internalAngle = Constants.TwoPi - _internalAngle;
+            _internalAngle = Math.Tau - _internalAngle;
             var tempFace = OwnedFace;
             OwnedFace = OtherFace;
             OtherFace = tempFace;

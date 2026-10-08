@@ -66,7 +66,7 @@ namespace TVGL
         /// <param name="pathIsClosed">if set to <c>true</c> [path is closed].</param>
         /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
         {
             throw new NotImplementedException();
 
