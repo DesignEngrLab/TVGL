@@ -2686,6 +2686,12 @@ namespace TVGL
         /// </remarks>
         public static bool IsVertexInsideTriangle(TriangleFace face, Vector3 q)
         {
+            if (q.X < face.A.X && q.X < face.B.X && q.X < face.C.X) return false;
+            if (q.X > face.A.X && q.X > face.B.X && q.X > face.C.X) return false;
+            if (q.Y < face.A.Y && q.Y < face.B.Y && q.Y < face.C.Y) return false;
+            if (q.Y > face.A.Y && q.Y > face.B.Y && q.Y > face.C.Y) return false;
+            if (q.Z < face.A.Z && q.Z < face.B.Z && q.Z < face.C.Z) return false;
+            if (q.Z > face.A.Z && q.Z > face.B.Z && q.Z > face.C.Z) return false;
             var aToQ = q - face.A.Coordinates;
             var aToB = face == face.AB.OwnedFace ? face.AB.Vector : -face.AB.Vector;
             var aToC = face == face.CA.OwnedFace ? -face.CA.Vector : face.CA.Vector;
