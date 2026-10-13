@@ -3167,6 +3167,9 @@ namespace TVGL
         /// <param name="path">The path.</param>
         /// <param name="axis">The axis.</param>
         /// <param name="anchor">The anchor.</param>
+        /// <param name="minAngle"></param>
+        /// <param name="maxAngle"></param>
+        /// <param name="isClosed"></param>
         /// <param name="startingAngle">The starting angle.</param>
         /// <returns>A double.</returns>
         public static double FindWindingAroundAxis(this IEnumerable<Vector3> path, Vector3 axis, Vector3 anchor,

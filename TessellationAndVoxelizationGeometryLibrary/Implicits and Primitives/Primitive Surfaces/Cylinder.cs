@@ -141,75 +141,7 @@ namespace TVGL
                 prev2DVertex = coord2D;
             }
         }
-        public List<Polygon> GetUnrolledPolygons(IEnumerable<IList<Vector3>> pointSets, IEnumerable<bool> IsClosedSet,
-            out List<bool> open)
-        {
-            var result = new List<Polygon>();
-            var polygons = new List<Polygon>();
-            var encirclingLoops = new SortedList<double, List<Vector2>>();
-            open = new List<bool>();
-            var isClosedEnumerator = IsClosedSet.GetEnumerator();
-            var allPolygonsMinX = double.PositiveInfinity;
-            var allPolygonsMaxX = double.NegativeInfinity;
-            foreach (var pointList in pointSets)
-            {
-                // there are 3 types of results:
-                // 1. a closed path that does not encircle the axis. Imagine drawing a loop on the side of the cylinder
-                // 2. a closed path that does encircle the axis - this will be an open polygon where the
-                //    ends are offset by 2π*Radius in the x-direction
-                // 3. an open path - this will be an open polygon
-                var pointList2D = TransformFrom3DTo2D(pointList).ToList();
-                MinX = Math.Min(allPolygonsMinX, pointList2D.Min(v => v.X));
-                MaxX = Math.Max(allPolygonsMaxX, pointList2D.Max(v => v.X));
-                var isClosed = isClosedEnumerator.MoveNext() ? isClosedEnumerator.Current : false;
-                // when the points are a closed path and they encircle the axis
-                var windingAngle = Math.Abs(MiscFunctions.FindWindingAroundAxis(pointList, Axis, Anchor, out _, out _, isClosed));
-                var encirclesAxis = isClosed && windingAngle > 1.67 * Math.PI;
-                if (encirclesAxis)
-                {
-                    // if the shape encircles the axis, then the first and last points should be the same, so we yield
-                    // the first point again to close the path, BUT, it is offset by 2π*Radius in the x-direction,
-                    // so that the shape can be unrolled into a flat polygon
-                    if (pointList2D[^1].X < pointList2D[0].X)
-                        pointList2D.Add(new Vector2(-Radius * Math.Tau + pointList2D[0].X, pointList2D[0].Y));
-                    else
-                        pointList2D.Add(new Vector2(Radius * Math.Tau + pointList2D[0].X, pointList2D[0].Y));
-                    encirclingLoops.Add(pointList2D[0].Y, pointList2D);
-                }
-                else if (isClosed)
-                    polygons.Add(new Polygon(pointList2D, isClosed: true));
-                else
-                {
-                    result.Add(new Polygon(pointList2D, isClosed: false));
-                    open.Add(true);
-                }
 
-
-                // now to handle the encircling loops
-                if (encirclingLoops.Count > 0 && encirclingLoops.Values[0][0].X > encirclingLoops.Values[0][^1].X) // then loop is 
-                    // enclosing the end of the cylinder and we consider it open
-                {
-                    result.Add(new Polygon(encirclingLoops.Values[0], isClosed: true));
-                    open.Add(true);
-                    encirclingLoops.RemoveAt(0);
-                }
-                for (int i = 1; i < encirclingLoops.Count; i += 2)
-                {
-                    polygons.Add(new Polygon(encirclingLoops.Values[i - 1].Concat(encirclingLoops.Values[i]), isClosed: true));
-                }
-                if (int.IsOddInteger(encirclingLoops.Count))
-                {
-                    result.Add(new Polygon(encirclingLoops.Values[^1], isClosed: true));
-                    open.Add(true);
-                }
-                foreach (var poly in polygons.CreateShallowPolygonTrees(false))
-                {
-                    result.Add(poly);
-                    open.Add(false);
-                }
-            }
-            return result;
-        }
         #region Properties
 
 
