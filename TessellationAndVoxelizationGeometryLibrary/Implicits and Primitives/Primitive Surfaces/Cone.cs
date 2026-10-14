@@ -187,7 +187,7 @@ namespace TVGL
             var radius = sinAperture * distanceDownCone;
             var height = radius / Aperture;
             var result = Apex + height * Axis;
-            result += radius * Math.Sin(angle) * PerpYDir;
+            result += radius * Math.Cos(angle) * PerpXDir;
             result += radius * Math.Sin(angle) * PerpYDir;
             return result;
         }

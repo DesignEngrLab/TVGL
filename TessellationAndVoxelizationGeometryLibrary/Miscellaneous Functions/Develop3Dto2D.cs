@@ -142,7 +142,7 @@ namespace TVGL
                 for (int j = 1; j <= numPointsToAdd; j++)
                 {
                     var y = lowerRight.Y + j * stepSize;
-                    polygonPoints.Add(new Vector2(Math.Tau, y));
+                    polygonPoints.Add(new Vector2(circumference, y));
                 }
                 polygonPoints.AddRange(topLoop);
                 // Now we can create the polygon
