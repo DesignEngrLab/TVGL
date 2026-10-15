@@ -625,7 +625,7 @@ namespace TVGL
             }
         }
 
-        private Vector3 GetGradient(Vector3 point)
+        public Vector3 GetGradient(Vector3 point)
         {
             return new Vector3(
                 2 * XSqdCoeff * point.X + XYCoeff * point.Y + XZCoeff * point.Z + XCoeff,
