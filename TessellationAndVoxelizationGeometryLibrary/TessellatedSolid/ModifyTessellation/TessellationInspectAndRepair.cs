@@ -1647,7 +1647,7 @@ namespace TVGL
         {
             if (border.IsPlanar)
                 prim = new Plane(border.PlaneDistance, border.PlaneNormal);
-            FindBestCurve(prim.TransformFrom3DTo2D(border.GetCoordinates(), border.IsClosed),
+            FindBestCurve(prim.TransformFrom3DTo2D(border.GetCoordinates()),
                        double.PositiveInfinity, out var curve, out var curveError);
             border.Curve = curve;
             border.CurveError = curveError;

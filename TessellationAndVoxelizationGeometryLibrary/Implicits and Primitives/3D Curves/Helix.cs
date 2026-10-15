@@ -79,7 +79,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public static double DeterminePitch(StraightLine2D line, Cylinder cyl)
         {
-            return Constants.TwoPi * cyl.Radius * line.Direction.Y / line.Direction.X;
+            return Math.Tau * cyl.Radius * line.Direction.Y / line.Direction.X;
         }
 
         /// <summary>
@@ -93,7 +93,7 @@ namespace TVGL
             var start = path.First();
             var end = path.Last();
             // Because we already know it to be a straight line, we can just look at the ends.
-            return Math.Abs(start.X - end.X) / (Constants.TwoPi * cyl.Radius);
+            return Math.Abs(start.X - end.X) / (Math.Tau * cyl.Radius);
         }
 
         /// <summary>

@@ -217,7 +217,7 @@ namespace TVGL
             }
             else if (triangle.Normal[1] < 0) //If only y is negative, add 360 (Q4)
             {
-                Theta = Math.Atan(triangle.Normal[1] / triangle.Normal[0]) + Constants.TwoPi;
+                Theta = Math.Atan(triangle.Normal[1] / triangle.Normal[0]) + Math.Tau;
             }
             else //Everything is positive (Q1).
             {
@@ -289,8 +289,8 @@ namespace TVGL
             //Set the direction of the arc (θ, φ), based on the azimuthal angle and the polar angle respectively.
             //Direction based on node1 to node2. 
             var azimuthal = node2.Theta - node1.Theta;
-            if (azimuthal > Math.PI) azimuthal = azimuthal - Constants.TwoPi;
-            if (azimuthal <= -Math.PI) azimuthal = azimuthal + Constants.TwoPi;
+            if (azimuthal > Math.PI) azimuthal = azimuthal - Math.Tau;
+            if (azimuthal <= -Math.PI) azimuthal = azimuthal + Math.Tau;
             var polar = node2.Phi - node1.Phi;
             Direction = new Vector2(azimuthal, polar);
         }
@@ -482,7 +482,7 @@ namespace TVGL
                     }
                     //Case 3: Inbetween antiPoint1 and antiPoint2 
                     //Case 4: Inbetween antiPoint2 and Point1
-                    intersection = new Intersection(intersectionVertex, Constants.TwoPi - l3, arc);
+                    intersection = new Intersection(intersectionVertex, Math.Tau - l3, arc);
                     tempIntersections.Add(intersection);
 
                     //Only one intersection is possible per arc, since the case of multiple intersections is captured above.

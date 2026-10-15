@@ -1599,7 +1599,7 @@ namespace TVGL
         {
             var angleCos = vector1.Dot(vector2) / (vector1.Length() * vector2.Length());
             if (angleCos >= 1) return Math.PI;
-            if (angleCos <= -1) return Constants.TwoPi;
+            if (angleCos <= -1) return Math.Tau;
             return Math.PI + Math.Acos(angleCos);
         }
 
@@ -1634,7 +1634,7 @@ namespace TVGL
         {
             var angle = Math.Atan2(vector.Y, vector.X);
             if (angle >= 0) return angle;
-            return Constants.TwoPi + angle;
+            return Math.Tau + angle;
         }
 
         /// <summary>
@@ -1647,7 +1647,7 @@ namespace TVGL
         {
             var angle = Math.Atan2(-vector.Y, vector.X);
             if (angle >= 0) return angle;
-            return Constants.TwoPi + angle;
+            return Math.Tau + angle;
         }
 
         /// <summary>
@@ -1660,7 +1660,7 @@ namespace TVGL
         {
             var angle = Math.Atan2(vector.Y, vector.X) - Constants.HalfPi;
             if (angle >= 0) return angle;
-            return Constants.TwoPi + angle;
+            return Math.Tau + angle;
         }
 
         /// <summary>
@@ -1673,7 +1673,7 @@ namespace TVGL
         {
             var angle = Math.Atan2(-vector.Y, vector.X) - Constants.HalfPi;
             if (angle >= 0) return angle;
-            return Constants.TwoPi + angle;
+            return Math.Tau + angle;
         }
 
         /// <summary>
@@ -1686,7 +1686,7 @@ namespace TVGL
         {
             var angle = Math.Atan2(datum.Cross(vectorA), datum.Dot(vectorA));
             if (angle >= 0) return angle;
-            return Constants.TwoPi + angle;
+            return Math.Tau + angle;
         }
         /// <summary>
         /// Gets the counter-clockwise rotated angle of vector-A from the datum vector
@@ -1698,7 +1698,7 @@ namespace TVGL
         {
             var angle = -Math.Atan2(datum.Cross(vectorA), datum.Dot(vectorA));
             if (angle >= 0) return angle;
-            return Constants.TwoPi + angle;
+            return Math.Tau + angle;
         }
 
 
@@ -1764,7 +1764,7 @@ namespace TVGL
         {
             var angle = Math.Atan2(datum.Cross(vectorA).Dot(unitPlaneNormal), datum.Dot(vectorA));
             if (angle >= 0) return angle;
-            return Constants.TwoPi + angle;
+            return Math.Tau + angle;
         }
 
         /// <summary>
@@ -2686,6 +2686,12 @@ namespace TVGL
         /// </remarks>
         public static bool IsVertexInsideTriangle(TriangleFace face, Vector3 q)
         {
+            if (q.X < face.A.X && q.X < face.B.X && q.X < face.C.X) return false;
+            if (q.X > face.A.X && q.X > face.B.X && q.X > face.C.X) return false;
+            if (q.Y < face.A.Y && q.Y < face.B.Y && q.Y < face.C.Y) return false;
+            if (q.Y > face.A.Y && q.Y > face.B.Y && q.Y > face.C.Y) return false;
+            if (q.Z < face.A.Z && q.Z < face.B.Z && q.Z < face.C.Z) return false;
+            if (q.Z > face.A.Z && q.Z > face.B.Z && q.Z > face.C.Z) return false;
             var aToQ = q - face.A.Coordinates;
             var aToB = face == face.AB.OwnedFace ? face.AB.Vector : -face.AB.Vector;
             var aToC = face == face.CA.OwnedFace ? -face.CA.Vector : face.CA.Vector;
@@ -3101,7 +3107,7 @@ namespace TVGL
             maxAngle = double.NegativeInfinity;
             foreach (var path in borders)
             {
-                FindWindingAroundAxis(path.GetCoordinates(), transform, anchor, out var minAngleIn, out var maxAngleIn);
+                FindWindingAroundAxis(path.GetCoordinates(), transform, anchor, out var maxAngleIn, out var minAngleIn, isClosed: true);
                 if (maxAngle < minAngleIn)
                 {
                     minAngleIn += Math.Tau;
@@ -3137,9 +3143,10 @@ namespace TVGL
         /// <param name="anchor">The anchor.</param>
         /// <param name="minAngle">The min angle.</param>
         /// <param name="maxAngle">The max angle.</param>
+        /// <param name="isClosed"></param>
         /// <returns>A magnitude of the angle.</returns>
         public static double FindWindingAroundAxis(this IEnumerable<Vector3> path, Matrix4x4 transform,
-            Vector3 anchor, out double minAngle, out double maxAngle)
+            Vector3 anchor, out double minAngle, out double maxAngle, bool isClosed = true)
         {
             var center = anchor.ConvertTo2DCoordinates(transform);
             var coords = path.Select(v => v.ConvertTo2DCoordinates(transform)).ToList();
@@ -3151,7 +3158,7 @@ namespace TVGL
                 if (radiiSqd[i] < tooSmallRadii)
                     coords.RemoveAt(i);
 
-            return coords.GetWindingAngles(center, true, out minAngle, out maxAngle);
+            return coords.GetWindingAngles(center, isClosed, out minAngle, out maxAngle);
         }
 
         /// <summary>
@@ -3163,10 +3170,10 @@ namespace TVGL
         /// <param name="startingAngle">The starting angle.</param>
         /// <returns>A double.</returns>
         public static double FindWindingAroundAxis(this IEnumerable<Vector3> path, Vector3 axis, Vector3 anchor,
-            out double minAngle, out double maxAngle)
+            out double minAngle, out double maxAngle, bool isClosed = true)
         {
             var transform = axis.TransformToXYPlane(out _);
-            return FindWindingAroundAxis(path, transform, anchor, out minAngle, out maxAngle);
+            return FindWindingAroundAxis(path, transform, anchor, out minAngle, out maxAngle, isClosed);
         }
 
     }

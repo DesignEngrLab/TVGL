@@ -1,0 +1,63 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>TVGL.STEPImportExport</AssemblyName>
+    <RootNamespace>TVGL.STEPImportExport</RootNamespace>
+    <Version>1.0.0</Version>
+    <Product>TVGL STEP Import and Export</Product>
+    <PackageId>TVGL.STEPImportExport</PackageId>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Authors>Matt Campbell, Brandon Massoni</Authors>
+    <Company>Design Engineering Lab</Company>
+    <Description>Import and export CAD models in STEP format (ISO 10303) into TVGL TessellatedSolids and SolidAssemblies, preserving analytic primitives.</Description>
+    <Copyright>2026</Copyright>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageProjectUrl>https://designengrlab.github.io/TVGL/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/DesignEngrLab/TVGL.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>step;stp;cad;opencascade;tvgl;tessellation;brep;computational-geometry</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OCCT.WIN64" Version="7.8.1.3" GeneratePathProperty="true">
+      <IncludeAssets>none</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The native bridge library -->
+    <Content Include="runtimes\win-x64\native\tvgl_step_bridge.dll">
+      <PackagePath>runtimes/win-x64/native</PackagePath>
+      <Pack>true</Pack>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <!-- OCCT runtime DLLs dynamically resolved from the NuGet cache (zero DLL bloat in git) -->
+    <Content Include="$(PkgOCCT_WIN64)\runtimes\win64\*.dll">
+      <Link>runtimes\win-x64\native\%(Filename)%(Extension)</Link>
+      <PackagePath>runtimes/win-x64/native</PackagePath>
+      <Pack>true</Pack>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="..\LICENSE" Pack="true" PackagePath="\" Link="LICENSE" />
+  </ItemGroup>
+
+</Project>

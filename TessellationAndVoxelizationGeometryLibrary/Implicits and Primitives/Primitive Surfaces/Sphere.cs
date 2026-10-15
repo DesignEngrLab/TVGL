@@ -224,7 +224,7 @@ namespace TVGL
         /// <param name="points">The points.</param>
         /// <param name="pathIsClosed">if set to <c>true</c> [path is closed].</param>
         /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
-        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
         {
             var pointsList = points as IList<Vector3> ?? points.ToList();
             var pointcenter = pointsList.Aggregate((sum, v) => sum + v) / pointsList.Count;
@@ -365,14 +365,14 @@ namespace TVGL
         }
 
         public static Sphere FitToVertices(double maxRadius, IEnumerable<Vector3> points, Vector3 firstNormal
-            , out double maxError)
+            , out double error)
         {
-            maxError = double.MaxValue;
+            error = double.MaxValue;
             if (DefineSphereFromVertices(points, out var sphereCenter, out var sphereRadius)
                 && sphereRadius < maxRadius && !SphereIsTooFlat(sphereCenter, points))
             {
                 var primitiveSurface = new Sphere(sphereCenter, sphereRadius, (points.First() - sphereCenter).Dot(firstNormal) > 0);
-                maxError = primitiveSurface.CalculateMaxError(points);
+                error = primitiveSurface.CalculateMeanSquareError(points);
                 return primitiveSurface;
             }
             return null;

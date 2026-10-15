@@ -104,7 +104,7 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool BorderEncirclesAxis(this IEnumerable<Vector3> path, Vector3 axis, Vector3 anchor)
         {
-            var angle = Math.Abs(MiscFunctions.FindWindingAroundAxis(path, axis, anchor, out _, out _));
+            var angle = Math.Abs(MiscFunctions.FindWindingAroundAxis(path, axis, anchor, out _, out _, true));
             return angle > 1.67 * Math.PI;
             // 1.67 is 5/3, which is 5/6 the way around. so the border would be at least a hexagon.
         }
@@ -118,7 +118,7 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool BorderEncirclesAxis(this IEnumerable<Vector3> path, Matrix4x4 transform, Vector3 anchor)
         {
-            var angle = Math.Abs(MiscFunctions.FindWindingAroundAxis(path, transform, anchor, out _, out _));
+            var angle = Math.Abs(MiscFunctions.FindWindingAroundAxis(path, transform, anchor, out _, out _, true));
             return angle > 1.67 * Math.PI;
             // 1.67 is 5/3, which is 5/6 the way around. so the border would be at least a hexagon.
         }
@@ -1228,7 +1228,7 @@ namespace TVGL
             var vertexLoops = surface.OuterEdges.MakeEdgePaths(true,
                 new EdgePathLoopsAroundInputFaces(surface.Faces)).Select(ep => ep.GetVertices().ToList());
             foreach (var loop in vertexLoops)
-                polygons.Add(new Polygon(surface.TransformFrom3DTo2D(loop.Select(v => v.Coordinates), true)));
+                polygons.Add(new Polygon(surface.TransformFrom3DTo2D(loop.Select(v => v.Coordinates))));
             return polygons.CreateShallowPolygonTrees(false).First();
         }
 

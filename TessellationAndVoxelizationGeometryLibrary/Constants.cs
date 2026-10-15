@@ -9,10 +9,6 @@ namespace TVGL
     public static class Constants
     {
         /// <summary>
-        /// The two pi
-        /// </summary>
-        public const double TwoPi = Math.Tau;
-        /// <summary>
         /// The half pi
         /// </summary>
         public const double HalfPi = Math.PI / 2;

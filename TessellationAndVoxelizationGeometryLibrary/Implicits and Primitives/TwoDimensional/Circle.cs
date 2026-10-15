@@ -49,7 +49,7 @@ namespace TVGL
         /// Circumference of circle
         /// </summary>
         [JsonIgnore]
-        public double Circumference => Constants.TwoPi * Radius;
+        public double Circumference => Math.Tau * Radius;
 
         /// <summary>
         /// Creates a circle, given the center point and the radius Squared
