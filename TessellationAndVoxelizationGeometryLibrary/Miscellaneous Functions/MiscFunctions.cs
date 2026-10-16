@@ -3151,13 +3151,18 @@ namespace TVGL
             var center = anchor.ConvertTo2DCoordinates(transform);
             var coords = path.Select(v => v.ConvertTo2DCoordinates(transform)).ToList();
             // filter out any points that are too close to the center
+            /* This is a hack to avoid the problem of points that are very close to the center of rotation. 
+             * The problem is that when a point is very close to the center, the angle can change dramatically with small changes in position, 
+             * which can lead to incorrect winding calculations. By filtering out points that are too close to the center, we can avoid this issue.
+             * The threshold for "too close" is set to 0.005 times the average squared radius of all points from the center.
+             */
             var radiiSqd = coords.Select(c => Vector2.DistanceSquared(center, c)).ToList();
             var avgRadiusSqd = radiiSqd.Average();
             var tooSmallRadii = 0.005 * avgRadiusSqd;
             for (int i = coords.Count - 1; i >= 0; i--)
                 if (radiiSqd[i] < tooSmallRadii)
                     coords.RemoveAt(i);
-
+            
             return coords.GetWindingAngles(center, isClosed, out minAngle, out maxAngle);
         }
 

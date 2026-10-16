@@ -181,14 +181,35 @@ namespace TVGL
         /// <param name="point">The point.</param>
         /// <returns>Vector3.</returns>
         public override Vector3 TransformFrom2DTo3D(Vector2 point)
+            => TransformFrom2DTo3D(point, -PerpXDir);
+
+        /// <summary>
+        /// Rolls a point from a developed cone back onto the cone using the same seam direction that was used
+        /// to develop it.
+        /// </summary>
+        /// <param name="point">The point in the developed cone.</param>
+        /// <param name="seamDirection">
+        /// A direction perpendicular to <see cref="Axis"/> that points from the axis toward the seam.
+        /// </param>
+        /// <returns>The corresponding point on the cone.</returns>
+        public Vector3 TransformFrom2DTo3D(Vector2 point, Vector3 seamDirection)
         {
+            var axisDirection = Axis.Normalize();
+            seamDirection -= seamDirection.Dot(axisDirection) * axisDirection;
+            if (seamDirection.LengthSquared().IsNegligible())
+                throw new ArgumentException("The cone seam direction must have a component perpendicular to the cone axis.",
+                    nameof(seamDirection));
+
+            seamDirection = seamDirection.Normalize();
+            var sectorCenterDirection = -seamDirection;
+            var sectorYDirection = axisDirection.Cross(sectorCenterDirection).Normalize();
             var angle = Math.Atan2(point.Y, point.X) / sinAperture;
             var distanceDownCone = point.Length();
             var radius = sinAperture * distanceDownCone;
             var height = radius / Aperture;
-            var result = Apex + height * Axis;
-            result += radius * Math.Cos(angle) * PerpXDir;
-            result += radius * Math.Sin(angle) * PerpYDir;
+            var result = Apex + height * axisDirection;
+            result += radius * Math.Cos(angle) * sectorCenterDirection;
+            result += radius * Math.Sin(angle) * sectorYDirection;
             return result;
         }
 
@@ -230,7 +251,33 @@ namespace TVGL
         /// <param name="points">The ordered points on the cone.</param>
         /// <returns>The points on the developed (flattened) cone.</returns>
         public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
+            => TransformFrom3DTo2D(points, -PerpXDir);
+
+        /// <summary>
+        /// Develops an ordered path on the cone using the supplied radial direction as the seam of the
+        /// flattened cone. The cone itself is not modified, allowing different callers to choose different
+        /// seams for the same surface.
+        /// </summary>
+        /// <param name="points">The ordered points on the cone.</param>
+        /// <param name="seamDirection">
+        /// A direction perpendicular to <see cref="Axis"/> that points from the axis toward the desired seam.
+        /// Any component parallel to the axis is removed before the direction is used.
+        /// </param>
+        /// <returns>The points on the developed (flattened) cone.</returns>
+        public IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, Vector3 seamDirection)
         {
+            var axisDirection = Axis.Normalize();
+            seamDirection -= seamDirection.Dot(axisDirection) * axisDirection;
+            if (seamDirection.LengthSquared().IsNegligible())
+                throw new ArgumentException("The cone seam direction must have a component perpendicular to the cone axis.",
+                    nameof(seamDirection));
+
+            seamDirection = seamDirection.Normalize();
+            // Atan2 places its branch cut opposite its local positive-X direction. Point positive X away from
+            // the requested seam so that the -pi/+pi discontinuity lies exactly on seamDirection.
+            var sectorCenterDirection = -seamDirection;
+            var sectorYDirection = axisDirection.Cross(sectorCenterDirection).Normalize();
+
             // Cut the cone to its center and lay it flat. A full 2*pi turn around the 3D
             // cone occupies only 2*pi*sin(apertureAngle) radians in that flat sector. Instead of
             // repeating every 2*pi like a cylinder, the sector repeats every 2*pi*sin(apertureAngle).
@@ -250,8 +297,8 @@ namespace TVGL
                 var distanceDownCone = v.Length();
                 // Find the point's azimuth around the 3D cone. Multiplying that azimuth by sinAperture compresses
                 // one full 3D revolution into the angular width of the developed sector described above.
-                var x = PerpXDir.Dot(v);
-                var y = PerpYDir.Dot(v);
+                var x = sectorCenterDirection.Dot(v);
+                var y = sectorYDirection.Dot(v);
                 var unwrappedAngle = Math.Atan2(y, x) * sinAperture; // recall that Atan2 returns -pi to +pi,
                                                                      // sinAperture attenuates this so that a gap
                                                                      // or seam is left...centered at 180 degrees
