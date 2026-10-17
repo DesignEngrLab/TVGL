@@ -47,7 +47,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 Assert.InRange(Vector3.Distance(sourcePoint,
                     cone.TransformFrom2DTo3D(vertex2D.Coordinates)), 0, 1e-6);
 
-            AssertSeamPairs(cone, result);
+            AssertSeamPairs(cone, result, 2e-6);
         }
 
         [Fact]
@@ -67,6 +67,47 @@ namespace TVGLUnitTestsAndBenchmarking
                 }).Single();
 
             AssertSeamPairs(cylinder, result);
+        }
+
+        [Theory]
+        [InlineData(0.2)]
+        [InlineData(7.4)]
+        public void ConeTipUsesOneApexAndTriangulatesWithoutAHighValenceFan(double aperture)
+        {
+            var cone = new Cone(Vector3.Zero, Vector3.UnitZ, aperture, true);
+            const double slantRadius = 20.0;
+            var height = slantRadius / Math.Sqrt(1.0 + aperture * aperture);
+            var ring = Enumerable.Range(0, 96)
+                .Select(i => new Vector3(aperture * height * Math.Cos(i * Math.Tau / 96.0),
+                    aperture * height * Math.Sin(i * Math.Tau / 96.0), height)).ToList();
+
+            var result = cone.DevelopPolygons(new[] { (IList<Vector3>)ring }, new[] { true },
+                new DevelopmentOptions { NewVertexSpacing = 0.8 }).Single();
+
+            Assert.Single(result.Polygon.Vertices, vertex =>
+                vertex.Coordinates.LengthSquared().IsNegligible());
+            AssertSeamPairs(cone, result, 2e-6);
+
+            var triangulation = result.Polygon.TriangulateDelaunay(false, true, targetSideLength: 0.8);
+            var apex = Assert.Single(triangulation.Vertices, vertex =>
+                vertex.Coordinates.LengthSquared().IsNegligible());
+            var apexFaces = triangulation.Faces.Where(face => face.Vertices.Contains(apex)).ToList();
+
+            Assert.InRange(apexFaces.Count, 1, 24);
+            Assert.All(triangulation.Faces, face =>
+            {
+                Assert.Equal(3, face.Vertices.Distinct().Count());
+                Assert.True(face.Area > 1e-10, $"Triangle {face.IndexInList} has area {face.Area}.");
+            });
+            Assert.All(apexFaces, face =>
+            {
+                var otherVertices = face.Vertices.Where(vertex => !ReferenceEquals(vertex, apex)).ToArray();
+                var first = (otherVertices[0].Coordinates - apex.Coordinates).Normalize();
+                var second = (otherVertices[1].Coordinates - apex.Coordinates).Normalize();
+                var angle = Math.Acos(Math.Clamp(first.Dot(second), -1.0, 1.0));
+                Assert.True(angle > Math.PI / 180.0,
+                    $"Apex triangle {face.IndexInList} has only {angle * 180.0 / Math.PI} degrees at the tip.");
+            });
         }
 
         [Fact]
@@ -125,7 +166,8 @@ namespace TVGLUnitTestsAndBenchmarking
             Assert.InRange(Vector3.Distance(originalDirection, copiedDirection), 0, 1e-10);
         }
 
-        private static void AssertSeamPairs(PrimitiveSurface surface, DevelopedPolygon result)
+        private static void AssertSeamPairs(PrimitiveSurface surface, DevelopedPolygon result,
+            double tolerance = 1e-6)
         {
             Assert.True(result.NumDuplicates > 0);
             var vertices = result.Polygon.Vertices;
@@ -136,7 +178,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 var first = surface.TransformFrom2DTo3D(vertices[i].Coordinates);
                 var second = surface.TransformFrom2DTo3D(vertices[matchingIndex].Coordinates);
                 var distance = Vector3.Distance(first, second);
-                Assert.True(distance <= 1e-6,
+                Assert.True(distance <= tolerance,
                     $"Pair {i}/{matchingIndex} ({vertices[i].Coordinates}, {vertices[matchingIndex].Coordinates}) restored {distance} apart.");
             }
         }

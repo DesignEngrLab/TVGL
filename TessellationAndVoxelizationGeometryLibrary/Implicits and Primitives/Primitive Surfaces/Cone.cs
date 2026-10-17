@@ -153,14 +153,6 @@ namespace TVGL
             => TransformFrom3DTo2D([point], PerpXDir).First();
 
         /// <summary>
-        /// Transforms the from 2d to 3d.
-        /// </summary>
-        /// <param name="point">The point.</param>
-        /// <returns>Vector3.</returns>
-        public override Vector3 TransformFrom2DTo3D(Vector2 point)
-            => TransformFrom2DTo3D(point, PerpXDir);
-
-        /// <summary>
         /// Rolls a point from a developed cone back onto the cone using the same seam direction that was used
         /// to develop it.
         /// </summary>
@@ -169,22 +161,15 @@ namespace TVGL
         /// A direction perpendicular to <see cref="Axis"/> that points from the axis toward the seam.
         /// </param>
         /// <returns>The corresponding point on the cone.</returns>
-        public Vector3 TransformFrom2DTo3D(Vector2 point, Vector3 seamDirection)
+        public override Vector3 TransformFrom2DTo3D(Vector2 point)
         {
-            var axisDirection = Axis.Normalize();
-            seamDirection -= seamDirection.Dot(axisDirection) * axisDirection;
-            if (seamDirection.LengthSquared().IsNegligible())
-                throw new ArgumentException("The cone seam direction must have a component perpendicular to the cone axis.",
-                    nameof(seamDirection));
-
-            seamDirection = seamDirection.Normalize();
-            var sectorCenterDirection = -seamDirection;
-            var sectorYDirection = axisDirection.Cross(sectorCenterDirection).Normalize();
+            var sectorCenterDirection = -PerpXDir;
+            var sectorYDirection = Axis.Cross(sectorCenterDirection).Normalize();
             var angle = Math.Atan2(point.Y, point.X) / sinAperture;
             var distanceDownCone = point.Length();
             var radius = sinAperture * distanceDownCone;
             var height = radius / Aperture;
-            var result = Apex + height * axisDirection;
+            var result = Apex + height * Axis;
             result += radius * Math.Cos(angle) * sectorCenterDirection;
             result += radius * Math.Sin(angle) * sectorYDirection;
             return result;

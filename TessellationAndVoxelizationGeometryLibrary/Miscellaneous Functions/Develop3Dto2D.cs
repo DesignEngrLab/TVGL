@@ -25,7 +25,6 @@ namespace TVGL
     {
         public double NewVertexSpacing { get; init; } = -1.0;
         public bool SelectBestSeam { get; init; }
-        public bool BluntConeTip { get; init; } = true;
     }
 
     /// <summary>
@@ -98,7 +97,7 @@ namespace TVGL
 
                 case Cone cone:
                     results = cone.GetUnrolledPolygons(paths, closed, out pointToVertexMap, out _,
-                        options.NewVertexSpacing, options.BluntConeTip, options.SelectBestSeam).ToList();
+                        options.NewVertexSpacing, options.SelectBestSeam).ToList();
                     break;
 
                 default:
@@ -267,13 +266,11 @@ namespace TVGL
         /// it's default will put vertices at the seams at the root-mean-square spacing of the current point Sets.
         /// If newVertexSpacing is a positive number then that will be used for the seam vertex space. If Nan is
         /// specified, the only the corners of seam are added.</param>
-        /// <param name="bluntTheTip">If true, then two new vertices are near the tip at the previous specified spacing,
-        /// which means that the resulting polygon will not reach the center.</param>
         /// <returns></returns>
         public static IEnumerable<(Polygon polygon, bool properEnclosure, int numRepeats, int indexMatchedToStart)>
             GetUnrolledPolygons(this Cone cone, IEnumerable<IList<Vector3>> pointSets, IEnumerable<bool> IsClosedSet,
-            double newVertexSpacing = -1.0, bool bluntTheTip = true)
-            => GetUnrolledPolygons(cone, pointSets, IsClosedSet, out _, newVertexSpacing, bluntTheTip);
+            double newVertexSpacing = -1.0)
+            => GetUnrolledPolygons(cone, pointSets, IsClosedSet, out _, newVertexSpacing);
 
         /// <summary>
         /// Create polygons that are unrolled versions of the 3D polygons on the cone and link each source 3D point
@@ -287,14 +284,11 @@ namespace TVGL
         /// each combined source point maps to the same retained vertex.
         /// </param>
         /// <param name="newVertexSpacing">Spacing for vertices added along the cone seam.</param>
-        /// <param name="bluntTheTip">Whether to replace the cone apex with two nearby vertices.</param>
         /// <returns>The developed polygons and their enclosure/seam metadata.</returns>
         public static IEnumerable<(Polygon polygon, bool properEnclosure, int numRepeats, int indexMatchedToStart)>
             GetUnrolledPolygons(this Cone cone, IEnumerable<IList<Vector3>> pointSets, IEnumerable<bool> IsClosedSet,
-            out Dictionary<Vector3, Vertex2D> pointToVertexMap, double newVertexSpacing = -1.0,
-            bool bluntTheTip = true)
-            => GetUnrolledPolygons(cone, pointSets, IsClosedSet, out pointToVertexMap, out _, newVertexSpacing,
-                bluntTheTip);
+            out Dictionary<Vector3, Vertex2D> pointToVertexMap, double newVertexSpacing = -1.0)
+            => GetUnrolledPolygons(cone, pointSets, IsClosedSet, out pointToVertexMap, out _, newVertexSpacing);
 
         /// <summary>
         /// Create polygons that are unrolled versions of the 3D polygons on the cone and return both the source
@@ -306,12 +300,11 @@ namespace TVGL
         /// <param name="pointToVertexMap">Maps each source 3D point to its retained polygon vertex.</param>
         /// <param name="seamDirection">The radial 3D direction at which the cone was cut.</param>
         /// <param name="newVertexSpacing">Spacing for vertices added along the cone seam.</param>
-        /// <param name="bluntTheTip">Whether to replace the cone apex with two nearby vertices.</param>
         /// <returns>The developed polygons and their enclosure/seam metadata.</returns>
         public static IEnumerable<(Polygon polygon, bool properEnclosure, int numRepeats, int indexMatchedToStart)>
             GetUnrolledPolygons(this Cone cone, IEnumerable<IList<Vector3>> pointSets, IEnumerable<bool> IsClosedSet,
             out Dictionary<Vector3, Vertex2D> pointToVertexMap, out Vector3 seamDirection,
-            double newVertexSpacing = -1.0, bool bluntTheTip = true, bool selectBestSeam = true)
+            double newVertexSpacing = -1.0, bool selectBestSeam = true)
         {
             var repeatAngle = Math.Abs(cone.sinAperture) * Math.Tau;
             var halfRepeatAngle = 0.5 * repeatAngle;
@@ -387,7 +380,8 @@ namespace TVGL
             {   // then loop is enclosing the apex of the cone 
                 var loop = encirclingLoops.Values[0];
                 Polygon p = MakeConePolygon(new List<Vector2>(), loop.Points2D, repeatAngle,
-                    halfRepeatAngle, newVertexSpacing, bluntTheTip, out var numRepeats, out var indexMatchedToStart);
+                    halfRepeatAngle, newVertexSpacing,
+                    out var numRepeats, out var indexMatchedToStart);
                 AddPointMappings(pointToVertexMap, p, loop.SourcePointMappings);
                 polyToIndices.Add(p, (numRepeats, indexMatchedToStart));
                 encirclingLoops.RemoveAt(0);
@@ -398,7 +392,8 @@ namespace TVGL
                 var innerLoop = encirclingLoops.Values[i - 1];
                 var outerLoop = encirclingLoops.Values[i];
                 Polygon p = MakeConePolygon(innerLoop.Points2D, outerLoop.Points2D,
-                    repeatAngle, halfRepeatAngle, newVertexSpacing, bluntTheTip, out var numRepeats, out var indexMatchedToStart);
+                    repeatAngle, halfRepeatAngle, newVertexSpacing,
+                    out var numRepeats, out var indexMatchedToStart);
                 AddPointMappings(pointToVertexMap, p,
                     innerLoop.SourcePointMappings.Concat(outerLoop.SourcePointMappings));
                 polyToIndices.Add(p, (numRepeats, indexMatchedToStart));
@@ -642,7 +637,8 @@ namespace TVGL
         }
 
         private static Polygon MakeConePolygon(List<Vector2> innerLoop, List<Vector2> outerLoop, double repeatAngle,
-            double halfRepeatAngle, double newVertexSpacing, bool bluntTheTip, out int numRepeats, out int indexMatchedToStart)
+            double halfRepeatAngle, double newVertexSpacing,
+            out int numRepeats, out int indexMatchedToStart)
         {
             var cosGap = Math.Cos(halfRepeatAngle);
             var sinGap = Math.Sin(halfRepeatAngle);
@@ -654,12 +650,7 @@ namespace TVGL
                 newVertexSpacing = rmsLength;
             var innerLoopWasEmpty = innerLoop.Count == 0;
             if (innerLoopWasEmpty)
-            {
-                if (bluntTheTip)
-                    innerLoop = [new Vector2(rmsLength*cosGap, rmsLength * sinGap),
-                   new Vector2(rmsLength*cosGap, -rmsLength * sinGap) ];
-                else innerLoop = [Vector2.Zero];
-            }
+                innerLoop = [Vector2.Zero];
             else
             {
                 ArrangeConeLoopAtSeam(innerLoop, shouldIncrease: false);
