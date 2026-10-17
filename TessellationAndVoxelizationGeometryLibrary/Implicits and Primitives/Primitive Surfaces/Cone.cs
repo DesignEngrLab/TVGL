@@ -122,6 +122,9 @@ namespace TVGL
         /// <param name="transformMatrix">The transform matrix.</param>
         public override void Transform(Matrix4x4 transformMatrix, bool transformFacesAndVertices)
         {
+            var transformedPerpXDir = perpXDir.IsNull()
+                ? Vector3.Null
+                : perpXDir.TransformNoTranslate(transformMatrix);
             base.Transform(transformMatrix, transformFacesAndVertices);
             Apex = Apex.Transform(transformMatrix);
             Axis = Axis.TransformNoTranslate(transformMatrix);
@@ -132,6 +135,10 @@ namespace TVGL
             rVector1 = rVector1.TransformNoTranslate(transformMatrix);
             rVector2 = rVector2.TransformNoTranslate(transformMatrix);
             Aperture = Math.Sqrt((rVector1.LengthSquared() + rVector2.LengthSquared()) / 2);
+            perpXDir = Vector3.Null;
+            perpYDir = Vector3.Null;
+            if (!transformedPerpXDir.IsNull())
+                PerpXDir = transformedPerpXDir;
             // this is the same procedure for how Radius is determined in the cylinder
             // transform. Its like we've moved done the cone by 1 unit and the aperture 
             // is the radius at that cross-section
@@ -143,37 +150,7 @@ namespace TVGL
         /// <param name="point">The point.</param>
         /// <returns>Vector2.</returns>
         public override Vector2 TransformFrom3DTo2D(Vector3 point)
-        {
-            var v = new Vector3(point.X, point.Y, point.Z) - Apex;
-            var distanceDownCone = v.Length();
-            var x = PerpXDir.Dot(v);
-            var y = PerpYDir.Dot(v);
-            /* originally doing the following, which makes intuitive sense, but
-             * since we take the cosine (and sine) of an Inverse tangent, we can reduce the computation
-            var angle = Math.Atan2(y, x) * betaFactor;
-            return new Vector2(distanceDownCone * Math.Cos(angle), distanceDownCone * Math.Sin(angle));
-        */
-            var hypotenuse = Math.Sqrt(x * x + y * y);
-            var cosAngle = sinAperture * x / hypotenuse;
-            var sinAngle = sinAperture * y / hypotenuse;
-            return new Vector2(distanceDownCone * cosAngle, distanceDownCone * sinAngle);
-            // you know how you can make a cone by cutting an arc from flat stock
-            // (paper, sheet metal, etc) and rolling it up? well what angle is that
-            // flattened sheet of the full 360-degrees?
-            // I call this angle, beta.
-            // Visualize or draw out both the 3d cone and the flattened arc. 
-            // The bottom of the cone (some perpendicular cut through the cone),
-            // the base circle is the same as the outside of the arc and has a
-            // length, c. This is equal to both:
-            // c = beta * distAtCommonDepth (where distAtCommonDepth is the distance down the outside of the cone; 
-            // note that distAtCommonDepth is Sqrt(h^2 + r^2) ),
-            // c = 2*pi*r e.g. circumference of the circle at the bottom of the cone
-            // here r is also aperture*height.
-            // Equate the c equations and solve for beta. 
-            // which reduces to h*sqrt(1+a^2).
-
-            //it turns out that betaFactor is the same as the sin(aperture angle)
-        }
+            => TransformFrom3DTo2D([point], PerpXDir).First();
 
         /// <summary>
         /// Transforms the from 2d to 3d.
@@ -181,7 +158,7 @@ namespace TVGL
         /// <param name="point">The point.</param>
         /// <returns>Vector3.</returns>
         public override Vector3 TransformFrom2DTo3D(Vector2 point)
-            => TransformFrom2DTo3D(point, -PerpXDir);
+            => TransformFrom2DTo3D(point, PerpXDir);
 
         /// <summary>
         /// Rolls a point from a developed cone back onto the cone using the same seam direction that was used
@@ -214,13 +191,41 @@ namespace TVGL
         }
 
 
-        private Vector3 PerpXDir
+        /// <summary>
+        /// Gets or sets the radial direction at the center of the physical seam in the developed cone.
+        /// The occupied sector is centered in the opposite direction.
+        /// </summary>
+        public Vector3 PerpXDir
         {
             get
             {
                 if (perpXDir.IsNull())
                     perpXDir = Axis.GetPerpendicularDirection();
+                else
+                {
+                    var axisDirection = Axis.Normalize();
+                    perpXDir -= perpXDir.Dot(axisDirection) * axisDirection;
+                    perpXDir = perpXDir.LengthSquared().IsNegligible()
+                        ? Axis.GetPerpendicularDirection()
+                        : perpXDir.Normalize();
+                }
                 return perpXDir;
+            }
+            set
+            {
+                if (Axis.LengthSquared().IsNegligible())
+                {
+                    perpXDir = value;
+                    perpYDir = Vector3.Null;
+                    return;
+                }
+                var axisDirection = Axis.Normalize();
+                var radialDirection = value - value.Dot(axisDirection) * axisDirection;
+                if (radialDirection.LengthSquared().IsNegligible())
+                    throw new ArgumentException("The cone perpendicular X direction must be perpendicular to the cone axis.",
+                        nameof(value));
+                perpXDir = radialDirection.Normalize();
+                perpYDir = Vector3.Null;
             }
         }
         /// <summary>
@@ -251,7 +256,7 @@ namespace TVGL
         /// <param name="points">The ordered points on the cone.</param>
         /// <returns>The points on the developed (flattened) cone.</returns>
         public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
-            => TransformFrom3DTo2D(points, -PerpXDir);
+            => TransformFrom3DTo2D(points, PerpXDir);
 
         /// <summary>
         /// Develops an ordered path on the cone using the supplied radial direction as the seam of the

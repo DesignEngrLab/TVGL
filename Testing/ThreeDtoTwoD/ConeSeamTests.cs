@@ -114,6 +114,44 @@ namespace TVGLUnitTestsAndBenchmarking
             }
         }
 
+        [Fact]
+        public void EncirclingPolygonLeavesItsOnlyAngularGapAtNegativeX()
+        {
+            var cone = new Cone(Vector3.Zero, Vector3.UnitZ, 1.0, true);
+            var ring = Enumerable.Range(0, 32)
+                .Select(i => PointOnCone(0.37 + i * Math.Tau / 32.0, 10.0 + 0.4 * Math.Sin(3 * i)))
+                .ToList();
+
+            var result = cone.GetUnrolledPolygons(new[] { (IList<Vector3>)ring }, new[] { true },
+                out var pointToVertexMap, out var seamDirection, 2.0).Single();
+            var halfSectorAngle = 0.5 * Math.Tau * ApertureScale;
+            var angles = result.polygon.Path.Select(point => Math.Atan2(point.Y, point.X)).ToList();
+
+            Assert.All(angles, angle => Assert.InRange(angle, -halfSectorAngle - 1e-6,
+                halfSectorAngle + 1e-6));
+
+            var normalizedAngles = angles.Select(NormalizeAngle).OrderBy(angle => angle).ToList();
+            var largestGap = double.NegativeInfinity;
+            var largestGapMidpoint = double.NaN;
+            for (var i = 0; i < normalizedAngles.Count; i++)
+            {
+                var start = normalizedAngles[i];
+                var end = i + 1 < normalizedAngles.Count ? normalizedAngles[i + 1] : normalizedAngles[0] + Math.Tau;
+                if (end - start <= largestGap)
+                    continue;
+
+                largestGap = end - start;
+                largestGapMidpoint = NormalizeAngle(start + 0.5 * largestGap);
+            }
+
+            Assert.InRange(AngularDistance(largestGapMidpoint, Math.PI), 0, 1e-6);
+            foreach (var (sourcePoint, vertex2D) in pointToVertexMap)
+            {
+                var restoredPoint = cone.TransformFrom2DTo3D(vertex2D.Coordinates, seamDirection);
+                Assert.InRange(Vector3.Distance(sourcePoint, restoredPoint), 0, 1e-6);
+            }
+        }
+
         private static Vector3 PointOnCone(double azimuth, double height = 10.0)
             => new(height * Math.Cos(azimuth), height * Math.Sin(azimuth), height);
 
@@ -122,5 +160,11 @@ namespace TVGLUnitTestsAndBenchmarking
 
         private static double AngularDistance(double first, double second)
             => Math.Abs(Math.Atan2(Math.Sin(first - second), Math.Cos(first - second)));
+
+        private static double NormalizeAngle(double angle)
+        {
+            angle %= Math.Tau;
+            return angle < 0 ? angle + Math.Tau : angle;
+        }
     }
 }

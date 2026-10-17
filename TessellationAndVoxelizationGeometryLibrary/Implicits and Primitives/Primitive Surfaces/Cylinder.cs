@@ -31,6 +31,9 @@ namespace TVGL
         /// <param name="transformMatrix">The transform matrix.</param>
         public override void Transform(Matrix4x4 transformMatrix, bool transformFacesAndVertices)
         {
+            var transformedPerpXDir = perpXDir.IsNull()
+                ? Vector3.Null
+                : perpXDir.TransformNoTranslate(transformMatrix);
             base.Transform(transformMatrix, transformFacesAndVertices);
             Anchor = Anchor.Transform(transformMatrix);
             Axis = Axis.TransformNoTranslate(transformMatrix);
@@ -41,6 +44,10 @@ namespace TVGL
             rVector1 = rVector1.TransformNoTranslate(transformMatrix);
             rVector2 = rVector2.TransformNoTranslate(transformMatrix);
             Radius = Math.Sqrt((rVector1.LengthSquared() + rVector2.LengthSquared()) / 2);
+            perpXDir = Vector3.Null;
+            perpYDir = Vector3.Null;
+            if (!transformedPerpXDir.IsNull())
+                PerpXDir = transformedPerpXDir;
             // we currently don't allow the cylinder to be squished into an elliptical cylinder
             // so the radius is the average of the two radius component vectors after the 
             // transform. Earlier, we were doing 
@@ -48,13 +55,40 @@ namespace TVGL
             // but this is not correct since M11 is often non-unity during rotation
         }
 
-        private Vector3 PerpXDir
+        /// <summary>
+        /// Gets or sets the radial direction represented by both joined boundaries of the developed cylinder.
+        /// </summary>
+        public Vector3 PerpXDir
         {
             get
             {
                 if (perpXDir.IsNull())
                     perpXDir = Axis.GetPerpendicularDirection();
+                else
+                {
+                    var axisDirection = Axis.Normalize();
+                    perpXDir -= perpXDir.Dot(axisDirection) * axisDirection;
+                    perpXDir = perpXDir.LengthSquared().IsNegligible()
+                        ? Axis.GetPerpendicularDirection()
+                        : perpXDir.Normalize();
+                }
                 return perpXDir;
+            }
+            set
+            {
+                if (Axis.LengthSquared().IsNegligible())
+                {
+                    perpXDir = value;
+                    perpYDir = Vector3.Null;
+                    return;
+                }
+                var axisDirection = Axis.Normalize();
+                var radialDirection = value - value.Dot(axisDirection) * axisDirection;
+                if (radialDirection.LengthSquared().IsNegligible())
+                    throw new ArgumentException("The cylinder perpendicular X direction must be perpendicular to the cylinder axis.",
+                        nameof(value));
+                perpXDir = radialDirection.Normalize();
+                perpYDir = Vector3.Null;
             }
         }
         /// <summary>

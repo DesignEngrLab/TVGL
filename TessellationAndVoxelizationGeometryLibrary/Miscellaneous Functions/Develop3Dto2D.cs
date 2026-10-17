@@ -18,6 +18,38 @@ using System.Linq;
 
 namespace TVGL
 {
+    /// <summary>
+    /// Options shared by plane, cylinder, and cone development.
+    /// </summary>
+    public sealed class DevelopmentOptions
+    {
+        public double NewVertexSpacing { get; init; } = -1.0;
+        public bool SelectBestSeam { get; init; }
+        public bool BluntConeTip { get; init; } = true;
+    }
+
+    /// <summary>
+    /// A developed polygon together with the information needed to restore it to 3D.
+    /// </summary>
+    public sealed class DevelopedPolygon
+    {
+        internal DevelopedPolygon(Polygon polygon, bool isProperEnclosure, int numDuplicates,
+            int indexWhereMatchingStarts, IReadOnlyDictionary<Vector3, Vertex2D> pointToVertexMap)
+        {
+            Polygon = polygon;
+            IsProperEnclosure = isProperEnclosure;
+            NumDuplicates = numDuplicates;
+            IndexWhereMatchingStarts = indexWhereMatchingStarts;
+            PointToVertexMap = pointToVertexMap;
+        }
+
+        public Polygon Polygon { get; }
+        public bool IsProperEnclosure { get; }
+        public int NumDuplicates { get; }
+        public int IndexWhereMatchingStarts { get; }
+        public IReadOnlyDictionary<Vector3, Vertex2D> PointToVertexMap { get; }
+    }
+
     // Here are the set of misellaneous functions that optimize! find the closest point, the most
     // orthogonal direction, etc.
     /// <summary>
@@ -25,9 +57,70 @@ namespace TVGL
     /// </summary>
     public static class Develop3Dto2D
     {
+        /// <summary>
+        /// Develops paths on a plane, cylinder, or cone using one common result contract.
+        /// </summary>
+        public static IReadOnlyList<DevelopedPolygon> DevelopPolygons(this PrimitiveSurface surface,
+            IEnumerable<IList<Vector3>> pointSets, IEnumerable<bool> isClosedSet,
+            DevelopmentOptions options = null)
+        {
+            options ??= new DevelopmentOptions();
+            var paths = pointSets.ToList();
+            var closed = isClosedSet.ToList();
+            while (closed.Count < paths.Count)
+                closed.Add(false);
+
+            List<(Polygon polygon, bool properEnclosure, int numRepeats, int indexMatchedToStart)> results;
+            Dictionary<Vector3, Vertex2D> pointToVertexMap;
+            switch (surface)
+            {
+                case Plane plane:
+                    var loops = paths.Select(path => (IList<Vector2>)plane.TransformFrom3DTo2D(path).ToList())
+                        .ToList();
+                    if (loops.Count == 0)
+                        return Array.Empty<DevelopedPolygon>();
+                    var planePolygon = new Polygon(loops[0], isClosed: closed[0]);
+                    if (closed[0])
+                        foreach (var loop in loops.Skip(1))
+                            planePolygon.AddInnerPolygon(new Polygon(loop, isClosed: true));
+                    results = [(planePolygon, planePolygon.IsClosed, 0, -1)];
+                    pointToVertexMap = CreatePointMappingsByInverse(plane, paths, results.Select(r => r.polygon));
+                    break;
+
+                case Cylinder cylinder:
+                    if (options.SelectBestSeam)
+                        cylinder.PerpXDir = FindBestRotationalSeamDirection(cylinder.Axis, cylinder.Anchor,
+                            paths, closed);
+                    results = cylinder.GetUnrolledPolygons(paths, closed, options.NewVertexSpacing).ToList();
+                    pointToVertexMap = CreatePointMappingsByInverse(cylinder, paths,
+                        results.Select(r => r.polygon));
+                    break;
+
+                case Cone cone:
+                    results = cone.GetUnrolledPolygons(paths, closed, out pointToVertexMap, out _,
+                        options.NewVertexSpacing, options.BluntConeTip, options.SelectBestSeam).ToList();
+                    break;
+
+                default:
+                    throw new NotSupportedException($"{surface.GetType().Name} cannot be developed to polygons.");
+            }
+
+            var developed = new List<DevelopedPolygon>(results.Count);
+            foreach (var result in results)
+            {
+                var ownedVertices = result.polygon.AllPolygons.SelectMany(polygon => polygon.Vertices).ToHashSet();
+                var resultMap = pointToVertexMap
+                    .Where(pair => ownedVertices.Contains(pair.Value))
+                    .ToDictionary(pair => pair.Key, pair => pair.Value);
+                developed.Add(new DevelopedPolygon(result.polygon, result.properEnclosure, result.numRepeats,
+                    result.indexMatchedToStart, resultMap));
+            }
+            return developed;
+        }
 
         public static IEnumerable<(Polygon polygon, bool properEnclosure, int numRepeats, int indexMatchedToStart)>
-            GetUnrolledPolygons(this Cylinder cyl, IEnumerable<IList<Vector3>> pointSets, IEnumerable<bool> IsClosedSet)
+            GetUnrolledPolygons(this Cylinder cyl, IEnumerable<IList<Vector3>> pointSets,
+            IEnumerable<bool> IsClosedSet, double newVertexSpacing = -1.0)
         {
             var polyToIndices = new Dictionary<Polygon, (int numRepeats, int indexMatchedToStart)>();
             var encirclingLoops = new SortedList<double, List<Vector2>>();
@@ -83,43 +176,29 @@ namespace TVGL
                     topLoop.RemoveAt(topLoop.Count - 1);
                 }
 
-                // now to set out the 4 corners of the polygon. The top and bottom loops may
-                // not have points at the edges, so we will add them if they are missing
-                Vector2 upperLeft;
-                if (topLoop[^1].X.IsNegligible())
-                { // unlike the ones below we keep this off the lists until the end. This 
-                    // will actually be the beginning of the loop.
-                    upperLeft = topLoop[^1];
-                    topLoop.RemoveAt(topLoop.Count - 1);
-                }
-                else
-                {
-                    upperLeft = new Vector2(0, topLoop[^1].Y);
-                }
-                Vector2 upperRight;
-                if (topLoop[0].X.IsPracticallySame(Math.Tau * cyl.Radius))
-                    upperRight = topLoop[0];
-                else
-                {
-                    upperRight = new Vector2(Math.Tau * cyl.Radius, topLoop[0].Y);
-                    topLoop.Insert(0, upperRight);
-                }
-                Vector2 lowerLeft;
+                // Intersect each loop's closing edge with the seam once, then use the same height on both
+                // developed copies. The paired seam vertices must roll back to one physical 3D point.
+                var lowerSeamHeight = GetCylinderSeamHeight(btmLoop, circumference, isIncreasing: true);
+                var lowerLeft = new Vector2(0, lowerSeamHeight);
+                var lowerRight = new Vector2(circumference, lowerSeamHeight);
                 if (btmLoop[0].X.IsNegligible())
-                    lowerLeft = btmLoop[0];
+                    btmLoop[0] = lowerLeft;
                 else
-                {
-                    lowerLeft = new Vector2(0, btmLoop[0].Y);
                     btmLoop.Insert(0, lowerLeft);
-                }
-                Vector2 lowerRight;
-                if (btmLoop[^1].X.IsPracticallySame(Math.Tau * cyl.Radius))
-                    lowerRight = btmLoop[^1];
+                if ((btmLoop[^1].X - circumference).IsNegligible())
+                    btmLoop[^1] = lowerRight;
                 else
-                {
-                    lowerRight = new Vector2(Math.Tau * cyl.Radius, btmLoop[0].Y);
                     btmLoop.Add(lowerRight);
-                }
+
+                var upperSeamHeight = GetCylinderSeamHeight(topLoop, circumference, isIncreasing: false);
+                var upperLeft = new Vector2(0, upperSeamHeight);
+                var upperRight = new Vector2(circumference, upperSeamHeight);
+                if ((topLoop[0].X - circumference).IsNegligible())
+                    topLoop[0] = upperRight;
+                else
+                    topLoop.Insert(0, upperRight);
+                if (topLoop[^1].X.IsNegligible())
+                    topLoop.RemoveAt(topLoop.Count - 1);
                 // I'm going to assume that the caller is okay with me adding extra points on either end.
                 // The current use case is triangulation, so I want the edges to not have huge jumps in size
                 var totalLengthSqdSum = 0.0;
@@ -128,8 +207,13 @@ namespace TVGL
                 for (int j = 1; j < topLoop.Count - 1; j++)
                     totalLengthSqdSum += (topLoop[j - 1] - topLoop[j]).LengthSquared();
                 var rmsLength = Math.Sqrt(totalLengthSqdSum / (btmLoop.Count + topLoop.Count - 2));
+                var seamVertexSpacing = double.IsNaN(newVertexSpacing)
+                    ? double.PositiveInfinity
+                    : newVertexSpacing > 0
+                        ? newVertexSpacing
+                        : rmsLength;
                 var numPointsToAdd = (int)(Math.Max(upperRight.Y - lowerRight.Y,
-                    upperLeft.Y - lowerLeft.Y) / rmsLength);
+                    upperLeft.Y - lowerLeft.Y) / seamVertexSpacing);
                 var polygonPoints = new List<Vector2> { upperLeft };
                 var stepSize = (upperLeft.Y - lowerLeft.Y) / (1 + numPointsToAdd);
                 for (int j = 1; j <= numPointsToAdd; j++)
@@ -156,6 +240,21 @@ namespace TVGL
 
             foreach (var poly in polyToIndices.Keys.CreateShallowPolygonTrees(false))
                 yield return (poly, true, polyToIndices[poly].numRepeats, polyToIndices[poly].indexMatchedToStart);
+        }
+
+        private static double GetCylinderSeamHeight(IReadOnlyList<Vector2> loop, double circumference,
+            bool isIncreasing)
+        {
+            var first = loop[0];
+            var last = loop[^1];
+            var equivalentFirst = new Vector2(
+                first.X + (isIncreasing ? circumference : -circumference), first.Y);
+            var seamX = isIncreasing ? circumference : 0.0;
+            var deltaX = equivalentFirst.X - last.X;
+            if (deltaX.IsNegligible())
+                return 0.5 * (first.Y + last.Y);
+            var fraction = (seamX - last.X) / deltaX;
+            return last.Y + fraction * (equivalentFirst.Y - last.Y);
         }
 
         /// <summary>
@@ -212,7 +311,7 @@ namespace TVGL
         public static IEnumerable<(Polygon polygon, bool properEnclosure, int numRepeats, int indexMatchedToStart)>
             GetUnrolledPolygons(this Cone cone, IEnumerable<IList<Vector3>> pointSets, IEnumerable<bool> IsClosedSet,
             out Dictionary<Vector3, Vertex2D> pointToVertexMap, out Vector3 seamDirection,
-            double newVertexSpacing = -1.0, bool bluntTheTip = true)
+            double newVertexSpacing = -1.0, bool bluntTheTip = true, bool selectBestSeam = true)
         {
             var repeatAngle = Math.Abs(cone.sinAperture) * Math.Tau;
             var halfRepeatAngle = 0.5 * repeatAngle;
@@ -234,7 +333,10 @@ namespace TVGL
 
             // Choose one seam for the complete set of paths. This is important for outer loops and their holes:
             // optimizing each loop independently would put them into incompatible developed coordinate systems.
-            seamDirection = FindBestConeSeamDirection(cone, pathData, transform2D, backTransform);
+            seamDirection = selectBestSeam
+                ? FindBestRotationalSeamDirection(cone.Axis, cone.Apex, pathData, transform2D, backTransform)
+                : cone.PerpXDir;
+            cone.PerpXDir = seamDirection;
 
             foreach (var path in pathData)
             {
@@ -249,6 +351,8 @@ namespace TVGL
                 //    ends are offset by 2π*Radius in the x-direction
                 // 3. an open path - this will be an open polygon
                 var transformedPoints = cone.TransformFrom3DTo2D(pointList, seamDirection).ToList();
+                if (encirclesAxis)
+                    transformedPoints = MoveIntoConeSector(transformedPoints, repeatAngle, halfRepeatAngle);
                 var sourcePointMappings = pointList.Zip(transformedPoints,
                     (point3D, point2D) => (point3D, point2D)).ToList();
                 IEnumerable<Vector2> points2D;
@@ -310,7 +414,7 @@ namespace TVGL
 
             foreach (var poly in polyToIndices.Keys.CreateShallowPolygonTrees(false))
                 results.Add((poly, true, polyToIndices[poly].numRepeats, polyToIndices[poly].indexMatchedToStart));
-
+            //Presenter.ShowAndHang(results.Select(p=>p.polygon));
             return results;
         }
 
@@ -378,11 +482,27 @@ namespace TVGL
             }
         }
 
-        private static Vector3 FindBestConeSeamDirection(Cone cone, IReadOnlyList<ConePathData> paths,
+        private static Vector3 FindBestRotationalSeamDirection(Vector3 axis, Vector3 centerPoint,
+            IReadOnlyList<IList<Vector3>> paths, IReadOnlyList<bool> isClosedSet)
+        {
+            var transform2D = axis.TransformToXYPlane(out var backTransform);
+            var pathData = new List<ConePathData>(paths.Count);
+            for (var i = 0; i < paths.Count; i++)
+            {
+                var isClosed = i < isClosedSet.Count && isClosedSet[i];
+                var windingAngle = MiscFunctions.FindWindingAroundAxis(paths[i], transform2D, centerPoint,
+                    out var minAngle, out var maxAngle, isClosed);
+                pathData.Add(new ConePathData(paths[i], isClosed, windingAngle, minAngle, maxAngle));
+            }
+            return FindBestRotationalSeamDirection(axis, centerPoint, pathData, transform2D, backTransform);
+        }
+
+        private static Vector3 FindBestRotationalSeamDirection(Vector3 axis, Vector3 centerPoint,
+            IReadOnlyList<ConePathData> paths,
             Matrix4x4 transform2D, Matrix4x4 backTransform)
         {
             const double angularTolerance = 1e-10;
-            var center = cone.Apex.ConvertTo2DCoordinates(transform2D);
+            var center = centerPoint.ConvertTo2DCoordinates(transform2D);
             var vertexAngles = new List<double>();
 
             foreach (var path in paths)
@@ -410,9 +530,9 @@ namespace TVGL
             }
 
             // With no reliable radial points there is nothing to optimize. This is the same seam used by the
-            // parameterless cone transform: the Atan2 branch cut lies opposite its default perpendicular X axis.
+            // parameterless rotational transform.
             if (vertexAngles.Count == 0)
-                return -cone.Axis.GetPerpendicularDirection();
+                return axis.GetPerpendicularDirection();
 
             vertexAngles.Sort();
             var bestNumberOfCutPaths = int.MaxValue;
@@ -446,13 +566,35 @@ namespace TVGL
             }
 
             if (double.IsNaN(bestSeamAngle))
-                return -cone.Axis.GetPerpendicularDirection();
+                return axis.GetPerpendicularDirection();
 
             var seamDirection = new Vector3(Math.Cos(bestSeamAngle), Math.Sin(bestSeamAngle), 0)
                 .TransformNoTranslate(backTransform);
-            var axisDirection = cone.Axis.Normalize();
+            var axisDirection = axis.Normalize();
             seamDirection -= seamDirection.Dot(axisDirection) * axisDirection;
             return seamDirection.Normalize();
+        }
+
+        private static Dictionary<Vector3, Vertex2D> CreatePointMappingsByInverse(PrimitiveSurface surface,
+            IEnumerable<IList<Vector3>> pointSets, IEnumerable<Polygon> polygons)
+        {
+            var vertices = polygons.SelectMany(polygon => polygon.AllPolygons)
+                .SelectMany(polygon => polygon.Vertices).Distinct().ToList();
+            var pointToVertexMap = new Dictionary<Vector3, Vertex2D>();
+            if (vertices.Count == 0)
+                return pointToVertexMap;
+
+            var restoredPoints = vertices.ToDictionary(vertex => vertex,
+                vertex => surface.TransformFrom2DTo3D(vertex.Coordinates));
+            foreach (var point in pointSets.SelectMany(path => path))
+            {
+                if (pointToVertexMap.ContainsKey(point))
+                    continue;
+                var vertex = vertices.MinBy(candidate =>
+                    Vector3.DistanceSquared(restoredPoints[candidate], point));
+                pointToVertexMap.Add(point, vertex);
+            }
+            return pointToVertexMap;
         }
 
         private static bool SeamCutsAngularPath(double seamAngle, double minAngle, double maxAngle,
@@ -471,6 +613,34 @@ namespace TVGL
             return angle < 0 ? angle + Math.Tau : angle;
         }
 
+        private static List<Vector2> MoveIntoConeSector(IReadOnlyList<Vector2> loop, double repeatAngle,
+            double halfRepeatAngle)
+        {
+            if (loop.Count == 0)
+                return [];
+
+            // TransformFrom3DTo2D keeps a path continuous by allowing its developed polar angle to move onto
+            // adjacent copies of the cone sector. Cartesian coordinates hide whole 2*pi turns, so recover that
+            // continuous angle before reducing it modulo repeatAngle. Reducing each raw Atan2 value independently
+            // would choose the wrong sector copy after the path has crossed +/-pi.
+            var result = new List<Vector2>(loop.Count);
+            var previousAngle = Math.Atan2(loop[0].Y, loop[0].X);
+            foreach (var point in loop)
+            {
+                var angle = Math.Atan2(point.Y, point.X);
+                while (angle - previousAngle > Math.PI)
+                    angle -= Math.Tau;
+                while (previousAngle - angle > Math.PI)
+                    angle += Math.Tau;
+
+                previousAngle = angle;
+                angle -= repeatAngle * Math.Floor((angle + halfRepeatAngle) / repeatAngle);
+                result.Add(new Vector2(point.Length() * Math.Cos(angle), point.Length() * Math.Sin(angle)));
+            }
+
+            return result;
+        }
+
         private static Polygon MakeConePolygon(List<Vector2> innerLoop, List<Vector2> outerLoop, double repeatAngle,
             double halfRepeatAngle, double newVertexSpacing, bool bluntTheTip, out int numRepeats, out int indexMatchedToStart)
         {
@@ -482,9 +652,8 @@ namespace TVGL
                 newVertexSpacing = double.MaxValue;
             else if (newVertexSpacing <= 0)
                 newVertexSpacing = rmsLength;
-            double prevAngle;
-            int i;
-            if (innerLoop.Count == 0)
+            var innerLoopWasEmpty = innerLoop.Count == 0;
+            if (innerLoopWasEmpty)
             {
                 if (bluntTheTip)
                     innerLoop = [new Vector2(rmsLength*cosGap, rmsLength * sinGap),
@@ -493,70 +662,33 @@ namespace TVGL
             }
             else
             {
-                // btm loop goes CW, top loop goes CCW.
-                prevAngle = Math.Atan2(innerLoop[^1].Y, innerLoop[^1].X);
-                for (i = 0; i < innerLoop.Count; i++)
-                {
-                    var nextAngle = Math.Atan2(innerLoop[i].Y, innerLoop[i].X);
-                    if (nextAngle > halfRepeatAngle && (prevAngle < halfRepeatAngle || prevAngle > nextAngle))
-                        break;
-                    prevAngle = nextAngle;
-                }
-                innerLoop.AddRange(innerLoop.Take(i));
-                innerLoop.RemoveRange(0, i);
+                ArrangeConeLoopAtSeam(innerLoop, shouldIncrease: false);
             }
-            prevAngle = Math.Atan2(outerLoop[^1].Y, outerLoop[^1].X);
-            for (i = 0; i < outerLoop.Count; i++)
-            {
-                var nextAngle = Math.Atan2(outerLoop[i].Y, outerLoop[i].X);
-                if (nextAngle > -halfRepeatAngle && (prevAngle < -halfRepeatAngle || prevAngle > nextAngle))
-                    break;
-                prevAngle = nextAngle;
-            }
-            outerLoop.AddRange(outerLoop.Take(i));
-            outerLoop.RemoveRange(0, i);
-            // now to set out the 4 corners of the polygon. 
-            Vector2 outerTop;
-            if (Math.Atan2(outerLoop[^1].Y, outerLoop[^1].X).IsPracticallySame(halfRepeatAngle))
-            { // unlike the ones below we keep this off the lists until the end. This 
-              // will actually be the beginning of the loop.
-                outerTop = outerLoop[^1];
-                outerLoop.RemoveAt(outerLoop.Count - 1);
-            }
-            else
-            {
-                var radius = outerLoop[^1].Length();
-                outerTop = new Vector2(radius * cosGap, radius * sinGap);
-            }
+            ArrangeConeLoopAtSeam(outerLoop, shouldIncrease: true);
+
+            // The closing edge of each arranged loop is the edge cut by the seam. Intersect that edge with one
+            // sector border and use the same radius for both copies. This creates true duplicate 3D points instead
+            // of projecting the two neighboring samples independently onto the two borders.
+            var outerSeamRadius = GetConeSeamRadius(outerLoop, repeatAngle, halfRepeatAngle, isIncreasing: true);
+            var outerTop = new Vector2(outerSeamRadius * cosGap, outerSeamRadius * sinGap);
+            var outerBtm = new Vector2(outerSeamRadius * cosGap, -outerSeamRadius * sinGap);
+            outerLoop.Insert(0, outerBtm);
+
             Vector2 innerTop;
-            if (Math.Atan2(innerLoop[0].Y, innerLoop[0].X).IsPracticallySame(halfRepeatAngle))
-            { // unlike the ones below we keep this off the lists until the end. This 
-              // will actually be the beginning of the loop.
-                innerTop = innerLoop[0];
-            }
-            else
-            {
-                var radius = innerLoop[0].Length();
-                innerTop = new Vector2(radius * cosGap, radius * sinGap);
-                innerLoop.Insert(0, innerTop);
-            }
             Vector2 innerBtm;
-            if (Math.Atan2(innerLoop[^1].Y, innerLoop[^1].X).IsPracticallySame(-halfRepeatAngle))
+            if (innerLoopWasEmpty)
+            {
+                innerTop = innerLoop[0];
                 innerBtm = innerLoop[^1];
-            else
-            {
-                var radius = innerLoop[^1].Length();
-                innerBtm = new Vector2(radius * cosGap, -radius * sinGap);
-                innerLoop.Add(innerBtm);
             }
-            Vector2 outerBtm;
-            if (Math.Atan2(outerLoop[0].Y, outerLoop[0].X).IsPracticallySame(-halfRepeatAngle))
-                outerBtm = outerLoop[0];
             else
             {
-                var radius = outerLoop[0].Length();
-                outerBtm = new Vector2(radius * cosGap, -radius * sinGap);
-                outerLoop.Insert(0, outerBtm);
+                var innerSeamRadius = GetConeSeamRadius(innerLoop, repeatAngle, halfRepeatAngle,
+                    isIncreasing: false);
+                innerTop = new Vector2(innerSeamRadius * cosGap, innerSeamRadius * sinGap);
+                innerBtm = new Vector2(innerSeamRadius * cosGap, -innerSeamRadius * sinGap);
+                innerLoop.Insert(0, innerTop);
+                innerLoop.Add(innerBtm);
             }
 
             var polygonPoints = new List<Vector2> { outerTop };
@@ -576,12 +708,74 @@ namespace TVGL
             stepSize = btmDistance / numPointsToAdd;
             for (int j = 1; j < numPointsToAdd; j++)
             {
-                polygonPoints.Add(new Vector2(outerBtm.X + j * stepSize * (innerBtm.X - outerBtm.X) / btmDistance,
-                    outerBtm.Y + j * stepSize * (innerBtm.Y - outerBtm.Y) / btmDistance));
+                polygonPoints.Add(new Vector2(innerBtm.X + j * stepSize * (outerBtm.X - innerBtm.X) / btmDistance,
+                    innerBtm.Y + j * stepSize * (outerBtm.Y - innerBtm.Y) / btmDistance));
             }
             polygonPoints.AddRange(outerLoop);
-            Presenter.ShowAndHang(polygonPoints);
+            //Presenter.ShowAndHang(new Polygon(polygonPoints, isClosed: true));
             return new Polygon(polygonPoints, isClosed: true);
+        }
+
+        private static void ArrangeConeLoopAtSeam(List<Vector2> loop, bool shouldIncrease)
+        {
+            if (loop.Count < 2)
+                return;
+
+            var crossingIndex = FindConeSectorWrap(loop, out var wrapDelta);
+            var isIncreasing = wrapDelta < 0;
+            if (isIncreasing != shouldIncrease)
+            {
+                loop.Reverse();
+                crossingIndex = FindConeSectorWrap(loop, out _);
+            }
+
+            var firstIndex = (crossingIndex + 1) % loop.Count;
+            if (firstIndex == 0)
+                return;
+
+            loop.AddRange(loop.Take(firstIndex));
+            loop.RemoveRange(0, firstIndex);
+        }
+
+        private static int FindConeSectorWrap(IReadOnlyList<Vector2> loop, out double wrapDelta)
+        {
+            var crossingIndex = 0;
+            wrapDelta = 0;
+            var largestJump = double.NegativeInfinity;
+            for (var i = 0; i < loop.Count; i++)
+            {
+                var next = (i + 1) % loop.Count;
+                var currentAngle = Math.Atan2(loop[i].Y, loop[i].X);
+                var nextAngle = Math.Atan2(loop[next].Y, loop[next].X);
+                var delta = nextAngle - currentAngle;
+                if (Math.Abs(delta) <= largestJump)
+                    continue;
+
+                largestJump = Math.Abs(delta);
+                crossingIndex = i;
+                wrapDelta = delta;
+            }
+
+            return crossingIndex;
+        }
+
+        private static double GetConeSeamRadius(IReadOnlyList<Vector2> loop, double repeatAngle,
+            double halfRepeatAngle, bool isIncreasing)
+        {
+            var first = loop[0];
+            var last = loop[^1];
+            var firstAngle = Math.Atan2(first.Y, first.X) + (isIncreasing ? repeatAngle : -repeatAngle);
+            var equivalentFirst = new Vector2(first.Length() * Math.Cos(firstAngle),
+                first.Length() * Math.Sin(firstAngle));
+            var seamAngle = isIncreasing ? halfRepeatAngle : -halfRepeatAngle;
+            var seamDirection = new Vector2(Math.Cos(seamAngle), Math.Sin(seamAngle));
+            var edge = equivalentFirst - last;
+            var denominator = edge.Cross(seamDirection);
+            if (denominator.IsNegligible())
+                return 0.5 * (first.Length() + last.Length());
+
+            var fraction = -last.Cross(seamDirection) / denominator;
+            return (last + fraction * edge).Dot(seamDirection);
         }
 
         private static double GetRootMeanSquareEdgeLength(params IList<Vector2>[] loops)
