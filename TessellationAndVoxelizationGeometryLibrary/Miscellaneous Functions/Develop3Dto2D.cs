@@ -48,20 +48,26 @@ namespace TVGL
                     else isClosed = true;
                     var windingAngle = MiscFunctions.FindWindingAroundAxis(path, transform2D, cyl.Anchor, out var minAngle,
                         out var maxAngle, isClosed.Value);
-                    allPathsData.Add(new PathWindingData(path, isClosed.Value, windingAngle, minAngle, maxAngle));
+                    allPathsData.Add(new PathWindingData(path, isClosed.Value, windingAngle,
+                        WindsPositiveAroundAxis(path, transform2D, cyl.Anchor, isClosed.Value), minAngle, maxAngle));
                 }
             }
             if (defineSeam)
-                cyl.PerpXDir = -FindBestRotationalSeamDirection(cyl.Axis, cyl.Anchor, allPathsData, transform2D, backTransform);
+                cyl.PerpXDir = FindBestRotationalSeamDirection(cyl.Axis, cyl.Anchor, allPathsData,
+                    transform2D, backTransform);
 
             var loopID = 0;
             foreach (var pathData in allPathsData)
             {
+                // Use the path overload so angular coordinates are unwrapped continuously across the
+                // Atan2 branch cut. Transforming each point independently folds a full encircling loop
+                // back into the principal interval and prevents its two boundaries from being paired.
+                var transformedPoints = cyl.TransformFrom3DTo2D(pathData.Points).ToList();
                 var pointList2D = new Vertex2D[pathData.Points.Count].ToList();
                 for (int i = 0; i < pointList2D.Count; i++)
                 {
                     var point3D = pathData.Points[i];
-                    var vertex2D = new Vertex2D(cyl.TransformFrom3DTo2D(point3D), i, loopID);
+                    var vertex2D = new Vertex2D(transformedPoints[i], i, loopID);
                     pointList2D[i] = vertex2D;
                     vertexMapping.Add(point3D, vertex2D);
                 }
@@ -96,23 +102,10 @@ namespace TVGL
                 // ensure that both loops are between 0 and 2π*Radius
                 var btmLoop = encirclingLoops.Values[i - 1];
                 loopID = btmLoop[0].LoopID;
-                var vertex2 = btmLoop[^1];
-                while (vertex2.X > circumference)
-                {   // if the last point is greater than 2π*Radius, then we will remove it and
-                    // insert a new point at the beginning that is 2π*Radius less than the last point
-                    vertex2.Coordinates = new Vector2(vertex2.X - circumference, vertex2.Y);
-                    btmLoop.Insert(0, vertex2);
-                    btmLoop.RemoveAt(btmLoop.Count - 1);
-                }
+                MoveSingleTurnLoopIntoCylinderStrip(btmLoop, circumference, increasing: true);
+
                 var topLoop = encirclingLoops.Values[i];
-                vertex2 = topLoop[^1];
-                while (vertex2.X < 0)
-                {   // if the last point is less than 0, then we will remove it and
-                    // add a new point at the end that is 2π*Radius more than the last point
-                    vertex2.Coordinates = new Vector2(vertex2.X + circumference, vertex2.Y);
-                    topLoop.Insert(0, vertex2);
-                    topLoop.RemoveAt(topLoop.Count - 1);
-                }
+                MoveSingleTurnLoopIntoCylinderStrip(topLoop, circumference, increasing: false);
 
                 // Intersect each loop's closing edge with the seam once, then use the same height on both
                 // developed copies. The paired seam vertices must roll back to one physical 3D point.
@@ -156,15 +149,57 @@ namespace TVGL
                 }
                 polygonPoints.AddRange(topLoop);
                 // Now we can create the polygon
-                polyToIndices.Add(new Polygon(polygonPoints, isClosed: true), (numRepeats, indexMatchedToStart));
+                polyToIndices.Add(new Polygon(polygonPoints,loopID, true), (numRepeats, indexMatchedToStart));
             }
             // finally, if there is an odd number of encircling loops, then the last one will be an open polygon
             if (int.IsOddInteger(encirclingLoops.Count))
-                results.Add((new Polygon(encirclingLoops.Values[^1], isClosed: true), 0, -1));
+                results.Add((new Polygon(encirclingLoops.Values[^1], encirclingLoops.Values[^1][0].LoopID, true), 0, -1));
 
             foreach (var poly in polyToIndices.Keys.CreateShallowPolygonTrees(false))
                 results.Add((poly, polyToIndices[poly].numRepeats, polyToIndices[poly].indexMatchedToStart));
             return results;
+        }
+
+        private static void MoveSingleTurnLoopIntoCylinderStrip(List<Vertex2D> loop, double circumference, bool increasing)
+        {
+            if (loop.Count < 2)
+                return;
+
+            // Every X + k*circumference represents the same physical point on
+            // the cylinder. First choose the representative in [0, circumference).
+            foreach (var vertex in loop)
+            {
+                var wrappedX = vertex.X
+                    - circumference * Math.Floor(vertex.X / circumference);
+
+                vertex.Coordinates = new Vector2(wrappedX, vertex.Y);
+            }
+
+            // Wrapping creates one large jump where the path crosses the seam.
+            // Move that jump to the list boundary so the bottom runs 0 -> C
+            // and the top runs C -> 0.
+            var cutIndex = 0;
+            var largestWrapJump = 0.5 * circumference;
+
+            for (var j = 1; j < loop.Count; j++)
+            {
+                var wrapJump = increasing
+                    ? loop[j - 1].X - loop[j].X   // large downward jump
+                    : loop[j].X - loop[j - 1].X;  // large upward jump
+
+                if (wrapJump > largestWrapJump)
+                {
+                    largestWrapJump = wrapJump;
+                    cutIndex = j;
+                }
+            }
+
+            if (cutIndex == 0)
+                return;
+
+            var beforeSeam = loop.GetRange(0, cutIndex);
+            loop.RemoveRange(0, cutIndex);
+            loop.AddRange(beforeSeam);
         }
 
         private static double GetCylinderSeamHeight(IReadOnlyList<Vertex2D> loop, double circumference,
@@ -216,14 +251,16 @@ namespace TVGL
                     else isClosed = true;
                     var windingAngle = MiscFunctions.FindWindingAroundAxis(path, transform2D, cone.Apex, out var minAngle,
                         out var maxAngle, isClosed.Value);
-                    pathData.Add(new PathWindingData(path, isClosed.Value, windingAngle, minAngle, maxAngle));
+                    pathData.Add(new PathWindingData(path, isClosed.Value, windingAngle,
+                        WindsPositiveAroundAxis(path, transform2D, cone.Apex, isClosed.Value), minAngle, maxAngle));
                 }
             }
 
             // Choose one seam for the complete set of paths. This is important for outer loops and their holes:
             // optimizing each loop independently would put them into incompatible developed coordinate systems.
             if (defineSeam)
-                cone.PerpXDir = -FindBestRotationalSeamDirection(cone.Axis, cone.Apex, pathData, transform2D, backTransform);
+                cone.PerpXDir = FindBestRotationalSeamDirection(cone.Axis, cone.Apex, pathData,
+                    transform2D, backTransform);
             var loopID = 0;
             foreach (var path in pathData)
             {
@@ -251,9 +288,14 @@ namespace TVGL
                 if (encirclesAxis)
                 {
                     var pointList2D = points2D.ToList();
+                    // A positive cone reverses path order during development (see above), so enclosure winding
+                    // must be expressed in the developed polygon's orientation rather than the source path's.
+                    var developedWindsPositive = cone.IsPositive.GetValueOrDefault(true)
+                        ? !path.WindsPositive
+                        : path.WindsPositive;
                     // store for later. use distance from the apex (length in 2D) to sort loops along the cone
                     encirclingLoops.Add(Math.Min(pointList2D[0].LengthSquared(), pointList2D[^1].LengthSquared()),
-                        new ConeLoopData(pointList2D, loopID, windingAngle > 0, sourcePointMappings));
+                        new ConeLoopData(pointList2D, loopID, developedWindsPositive, sourcePointMappings));
                 }
                 else if (isClosed) // simple closed shape is also stored for later polygon tree creation (not sorted)
                 {
@@ -271,7 +313,8 @@ namespace TVGL
             }
 
             // now to handle the encircling loops. They are sorted by distance from the apex, so that the innermost loop is first.
-            if (encirclingLoops.Count > 0 && !encirclingLoops.Values[0].WindsPositive)
+            if (encirclingLoops.Count > 0 &&
+                (encirclingLoops.Count == 1 || encirclingLoops.Values[0].WindsPositive))
             {   // then loop is enclosing the apex of the cone 
                 var loop = encirclingLoops.Values[0];
                 Polygon p = MakeConePolygon(new List<Vector2>(), loop.Points2D, repeatAngle,
@@ -289,7 +332,6 @@ namespace TVGL
                 Polygon p = MakeConePolygon(innerLoop.Points2D, outerLoop.Points2D,
                     repeatAngle, halfRepeatAngle, newVertexSpacing, innerLoop.LoopID, outerLoop.LoopID,
                     out var numRepeats, out var indexMatchedToStart);
-                Presenter.ShowAndHang(p);
                 AddPointMappings(pointToVertexMap, p,
                     innerLoop.SourcePointMappings.Concat(outerLoop.SourcePointMappings));
                 polyToIndices.Add(p, (numRepeats, indexMatchedToStart));
@@ -298,14 +340,14 @@ namespace TVGL
             if (int.IsOddInteger(encirclingLoops.Count))
             {
                 var loop = encirclingLoops.Values[^1];
-                var polygon = new Polygon(loop.Points2D, isClosed: true);
+                var polygon = new Polygon(loop.Points2D, loop.LoopID, false, true);
                 AddPointMappings(pointToVertexMap, polygon, loop.SourcePointMappings);
                 results.Add((polygon, 0, -1));
             }
 
             foreach (var poly in polyToIndices.Keys.CreateShallowPolygonTrees(false))
                 results.Add((poly, polyToIndices[poly].numRepeats, polyToIndices[poly].indexMatchedToStart));
-            Presenter.ShowAndHang(results.Select(p => p.polygon));
+            //Presenter.ShowAndHang(results.Select(p => p.polygon));
             return results;
         }
 
@@ -328,12 +370,13 @@ namespace TVGL
 
         private readonly struct PathWindingData
         {
-            internal PathWindingData(IList<Vector3> points, bool isClosed, double windingAngle, double minAngle,
-                double maxAngle)
+            internal PathWindingData(IList<Vector3> points, bool isClosed, double windingAngle,
+                bool windsPositive, double minAngle, double maxAngle)
             {
                 Points = points;
                 IsClosed = isClosed;
                 WindingAngle = windingAngle;
+                WindsPositive = windsPositive;
                 MinAngle = minAngle;
                 MaxAngle = maxAngle;
             }
@@ -341,8 +384,36 @@ namespace TVGL
             internal IList<Vector3> Points { get; }
             internal bool IsClosed { get; }
             internal double WindingAngle { get; }
+            internal bool WindsPositive { get; }
             internal double MinAngle { get; }
             internal double MaxAngle { get; }
+        }
+
+        private static bool WindsPositiveAroundAxis(IList<Vector3> points, Matrix4x4 transform,
+            Vector3 anchor, bool isClosed)
+        {
+            if (!isClosed || points.Count < 2)
+                return true;
+
+            var center = anchor.ConvertTo2DCoordinates(transform);
+            var coordinates = points.Select(point => point.ConvertTo2DCoordinates(transform)).ToList();
+            var radiiSquared = coordinates.Select(point => Vector2.DistanceSquared(center, point)).ToList();
+            var minimumRadiusSquared = 0.005 * radiiSquared.Average();
+            for (var i = coordinates.Count - 1; i >= 0; i--)
+                if (radiiSquared[i] < minimumRadiusSquared)
+                    coordinates.RemoveAt(i);
+            if (coordinates.Count < 2)
+                return true;
+
+            var previous = coordinates[^1] - center;
+            var signedWinding = 0.0;
+            foreach (var coordinate in coordinates)
+            {
+                var current = coordinate - center;
+                signedWinding += Math.Atan2(previous.Cross(current), previous.Dot(current));
+                previous = current;
+            }
+            return signedWinding >= 0.0;
         }
 
         private static void AddPointMappings(Dictionary<Vector3, Vertex2D> pointToVertexMap, Polygon polygon,
@@ -545,22 +616,22 @@ namespace TVGL
             var polygonPoints = new List<Vertex2D> { new Vertex2D(outerTop, -1, outerLoopID) };
             var topDistance = outerTop.Distance(innerTop);
             var btmDistance = outerBtm.Distance(innerBtm);
-            var numPointsToAdd = (int)Math.Ceiling(Math.Max(topDistance, btmDistance) / newVertexSpacing);
-            var stepSize = topDistance / numPointsToAdd;
+            var numPointsToAdd = Math.Max(1,
+                (int)Math.Ceiling(Math.Max(topDistance, btmDistance) / newVertexSpacing));
             for (int j = 1; j < numPointsToAdd; j++)
             {
-                // make this a weighted average of the two points, so that the points are evenly spaced along the line between them
-                polygonPoints.Add(new Vertex2D(new Vector2(outerTop.X + j * stepSize * (innerTop.X - outerTop.X) / topDistance,
-                    outerTop.Y + j * stepSize * (innerTop.Y - outerTop.Y) / topDistance), -1, outerLoopID));
+                var fraction = (double)j / numPointsToAdd;
+                polygonPoints.Add(new Vertex2D(outerTop + fraction * (innerTop - outerTop), -1,
+                    outerLoopID));
             }
             numRepeats = polygonPoints.Count + 1;
             polygonPoints.AddRange(innerLoop.Select(p => new Vertex2D(p, -1, innerLoopID)));
             indexMatchedToStart = polygonPoints.Count;
-            stepSize = btmDistance / numPointsToAdd;
             for (int j = 1; j < numPointsToAdd; j++)
             {
-                polygonPoints.Add(new Vertex2D(new Vector2(innerBtm.X + j * stepSize * (outerBtm.X - innerBtm.X) / btmDistance,
-                    innerBtm.Y + j * stepSize * (outerBtm.Y - innerBtm.Y) / btmDistance), -1, innerLoopID));
+                var fraction = (double)j / numPointsToAdd;
+                polygonPoints.Add(new Vertex2D(innerBtm + fraction * (outerBtm - innerBtm), -1,
+                    innerLoopID));
             }
             polygonPoints.AddRange(outerLoop.Select(p => new Vertex2D(p, -1, outerLoopID)));
             //Presenter.ShowAndHang(new Polygon(polygonPoints, isClosed: true));
@@ -636,13 +707,12 @@ namespace TVGL
             var numLengths = 0;
             foreach (var loop in loops)
             {
-                numLengths = loop.Count - 1;
-                for (int j = 1; j < loop.Count - 1; j++)
+                numLengths += Math.Max(0, loop.Count - 1);
+                for (int j = 1; j < loop.Count; j++)
                     totalLengthSqdSum += (loop[j - 1].X - loop[j].X) * (loop[j - 1].X - loop[j].X) +
                         (loop[j - 1].Y - loop[j].Y) * (loop[j - 1].Y - loop[j].Y);
             }
-            var rmsLength = Math.Sqrt(totalLengthSqdSum / numLengths);
-            return rmsLength;
+            return numLengths == 0 ? double.NaN : Math.Sqrt(totalLengthSqdSum / numLengths);
         }
 
     }

@@ -32,22 +32,86 @@ namespace TVGLUnitTestsAndBenchmarking
         }
 
         [Fact]
+        public void RotationalSurfacePerpXDirectionRemainsTheSelectedPhysicalSeam()
+        {
+            var cylinder = new Cylinder { Anchor = Vector3.Zero, Axis = Vector3.UnitZ, Radius = 3.0 };
+            var cylinderPath = new[] { -0.5, 0.0, 0.5 }
+                .Select(angle => PointOnCylinder(angle, 0.0)).ToList();
+            cylinder.GetUnrolledPolygons([new Polygon3D(cylinderPath, false)], true, out _);
+
+            var cone = new Cone(Vector3.Zero, Vector3.UnitZ, 1.0, true);
+            var conePath = new[] { -0.5, 0.0, 0.5 }
+                .Select(angle => PointOnCone(angle, 10.0)).ToList();
+            cone.GetUnrolledPolygons([new Polygon3D(conePath, false)], true, out _);
+
+            var expectedSeam = -Vector3.UnitX;
+            Assert.InRange(Vector3.Distance(expectedSeam, cylinder.PerpXDir), 0, 1e-9);
+            Assert.InRange(Vector3.Distance(expectedSeam, cone.PerpXDir), 0, 1e-9);
+        }
+
+        [Fact]
+        public void PlaneBuildsShallowTreesAndPreservesOpenPaths()
+        {
+            var plane = new Plane(0.0, Vector3.UnitZ) { PerpXDir = Vector3.UnitX };
+            IList<Vector3> openPath =
+            [
+                new(-10, -10, 0), new(-9, -8, 0), new(-8, -10, 0)
+            ];
+            IList<Vector3> firstOuter =
+            [
+                new(-6, -6, 0), new(6, -6, 0), new(6, 6, 0), new(-6, 6, 0)
+            ];
+            IList<Vector3> firstHole =
+            [
+                new(-2, -2, 0), new(-2, 2, 0), new(2, 2, 0), new(2, -2, 0)
+            ];
+            IList<Vector3> secondOuter =
+            [
+                new(10, -2, 0), new(14, -2, 0), new(14, 2, 0), new(10, 2, 0)
+            ];
+
+            var sourcePaths = new[]
+            {
+                (points: openPath, isClosed: false),
+                (points: firstHole, isClosed: true),
+                (points: secondOuter, isClosed: true),
+                (points: firstOuter, isClosed: true)
+            };
+            var polygons = sourcePaths.Select((source, index) => new Polygon(
+                plane.TransformFrom3DTo2D(source.points), index, false, source.isClosed)).ToList();
+            var results = polygons.CreateShallowPolygonTrees(true);
+
+            Assert.Equal(3, results.Count);
+            var openResult = Assert.Single(results, result => !result.IsClosed);
+            Assert.Equal(openPath.Count, openResult.Vertices.Count);
+
+            var closedResults = results.Where(result => result.IsClosed).ToList();
+            Assert.Equal(2, closedResults.Count);
+            var resultWithHole = Assert.Single(closedResults,
+                result => result.InnerPolygons.Count() == 1);
+            Assert.Equal(firstOuter.Count, resultWithHole.Vertices.Count);
+            Assert.Equal(firstHole.Count, Assert.Single(resultWithHole.InnerPolygons).Vertices.Count);
+            Assert.Single(closedResults, result => !result.InnerPolygons.Any());
+        }
+
+        [Fact]
         public void ConeStoresSelectedSeamAndDefaultInverseUsesIt()
         {
             var cone = new Cone(Vector3.Zero, Vector3.UnitZ, 1.0, true);
             var ring = Enumerable.Range(0, 32)
                 .Select(i => PointOnCone(0.21 + i * Math.Tau / 32.0, 10.0)).ToList();
 
-            var result = cone.DevelopPolygons(new[] { (IList<Vector3>)ring }, new[] { true },
-                new DevelopmentOptions { SelectBestSeam = true, NewVertexSpacing = 2.0 }).Single();
+            var result = cone.GetUnrolledPolygons([new Polygon3D(ring, true)], true,
+                out var pointToVertexMap, 2.0).Single();
             var selectedSeam = cone.PerpXDir;
 
             Assert.InRange(Vector3.Distance(cone.PerpXDir, selectedSeam), 0, 1e-10);
-            foreach (var (sourcePoint, vertex2D) in result.PointToVertexMap)
+            foreach (var (sourcePoint, vertex2D) in pointToVertexMap)
                 Assert.InRange(Vector3.Distance(sourcePoint,
                     cone.TransformFrom2DTo3D(vertex2D.Coordinates)), 0, 1e-6);
 
-            AssertSeamPairs(cone, result, 2e-6);
+            AssertSeamPairs(cone, result.polygon, result.numRepeats,
+                result.indexMatchedToStart, 2e-6);
         }
 
         [Fact]
@@ -59,14 +123,15 @@ namespace TVGLUnitTestsAndBenchmarking
             var top = Enumerable.Range(0, 32)
                 .Select(i => PointOnCylinder(-i * Math.Tau / 32.0, 5.0)).ToList();
 
-            var result = cylinder.DevelopPolygons(
-                new IList<Vector3>[] { bottom, top }, new[] { true, true }, new DevelopmentOptions
-                {
-                    SelectBestSeam = true,
-                    NewVertexSpacing = double.NaN
-                }).Single();
+            var polygon3D = new Polygon3D(bottom, true, [top]);
+            var results = cylinder.GetUnrolledPolygons([polygon3D], true,
+                out _, double.NaN);
+            Assert.True(results.Count == 1,
+                $"Expected one developed cylinder enclosure, but received: {string.Join(", ", results.Select(result => $"{result.numRepeats}/{result.indexMatchedToStart}"))}");
+            var result = results[0];
 
-            AssertSeamPairs(cylinder, result);
+            AssertSeamPairs(cylinder, result.polygon, result.numRepeats,
+                result.indexMatchedToStart);
         }
 
         [Theory]
@@ -81,14 +146,15 @@ namespace TVGLUnitTestsAndBenchmarking
                 .Select(i => new Vector3(aperture * height * Math.Cos(i * Math.Tau / 96.0),
                     aperture * height * Math.Sin(i * Math.Tau / 96.0), height)).ToList();
 
-            var result = cone.DevelopPolygons(new[] { (IList<Vector3>)ring }, new[] { true },
-                new DevelopmentOptions { NewVertexSpacing = 0.8 }).Single();
+            var result = cone.GetUnrolledPolygons([new Polygon3D(ring, true)], true,
+                out _, 0.8).Single();
 
-            Assert.Single(result.Polygon.Vertices, vertex =>
+            Assert.Single(result.polygon.Vertices, vertex =>
                 vertex.Coordinates.LengthSquared().IsNegligible());
-            AssertSeamPairs(cone, result, 2e-6);
+            AssertSeamPairs(cone, result.polygon, result.numRepeats,
+                result.indexMatchedToStart, 2e-6);
 
-            var triangulation = result.Polygon.TriangulateDelaunay(false, true, targetSideLength: 0.8);
+            var triangulation = result.polygon.TriangulateDelaunay(false, true, targetSideLength: 0.8);
             var apex = Assert.Single(triangulation.Vertices, vertex =>
                 vertex.Coordinates.LengthSquared().IsNegligible());
             var apexFaces = triangulation.Faces.Where(face => face.Vertices.Contains(apex)).ToList();
@@ -127,17 +193,38 @@ namespace TVGLUnitTestsAndBenchmarking
         private static void AssertMappedRoundTrip(PrimitiveSurface surface, IList<Vector3> path, bool isClosed,
             bool selectBestSeam)
         {
-            var result = surface.DevelopPolygons(new[] { path }, new[] { isClosed }, new DevelopmentOptions
+            Polygon polygon;
+            IReadOnlyDictionary<Vector3, Vertex2D> pointToVertexMap;
+            var polygon3D = new Polygon3D(path, isClosed);
+            switch (surface)
             {
-                SelectBestSeam = selectBestSeam,
-                NewVertexSpacing = double.NaN
-            }).Single();
-            var ownedVertices = result.Polygon.AllPolygons.SelectMany(polygon => polygon.Vertices).ToHashSet();
+                case Plane plane:
+                    polygon = new Polygon(plane.TransformFrom3DTo2D(path), isClosed: isClosed);
+                    pointToVertexMap = path.Select((point, index) => (point, index))
+                        .ToDictionary(item => item.point, item => polygon.Vertices[item.index]);
+                    break;
+                case Cylinder cylinder:
+                    var cylinderResult = cylinder.GetUnrolledPolygons([polygon3D], selectBestSeam,
+                        out var cylinderMap, double.NaN).Single();
+                    polygon = cylinderResult.polygon;
+                    pointToVertexMap = cylinderMap;
+                    break;
+                case Cone cone:
+                    var coneResult = cone.GetUnrolledPolygons([polygon3D], selectBestSeam,
+                        out var coneMap, double.NaN).Single();
+                    polygon = coneResult.polygon;
+                    pointToVertexMap = coneMap;
+                    break;
+                default:
+                    throw new NotSupportedException();
+            }
 
-            Assert.Equal(path.Count, result.PointToVertexMap.Count);
+            var ownedVertices = polygon.AllPolygons.SelectMany(resultPolygon => resultPolygon.Vertices).ToHashSet();
+
+            Assert.Equal(path.Count, pointToVertexMap.Count);
             foreach (var sourcePoint in path)
             {
-                var vertex = result.PointToVertexMap[sourcePoint];
+                var vertex = pointToVertexMap[sourcePoint];
                 Assert.Contains(vertex, ownedVertices);
                 Assert.InRange(Vector3.Distance(sourcePoint,
                     surface.TransformFrom2DTo3D(vertex.Coordinates)), 0, 1e-6);
@@ -166,15 +253,15 @@ namespace TVGLUnitTestsAndBenchmarking
             Assert.InRange(Vector3.Distance(originalDirection, copiedDirection), 0, 1e-10);
         }
 
-        private static void AssertSeamPairs(PrimitiveSurface surface, DevelopedPolygon result,
-            double tolerance = 1e-6)
+        private static void AssertSeamPairs(PrimitiveSurface surface, Polygon polygon,
+            int numDuplicates, int indexWhereMatchingStarts, double tolerance = 1e-6)
         {
-            Assert.True(result.NumDuplicates > 0);
-            var vertices = result.Polygon.Vertices;
-            var secondSeamStart = result.IndexWhereMatchingStarts - 1;
-            for (var i = 0; i < result.NumDuplicates; i++)
+            Assert.True(numDuplicates > 0);
+            var vertices = polygon.Vertices;
+            var secondSeamStart = indexWhereMatchingStarts - 1;
+            for (var i = 0; i < numDuplicates; i++)
             {
-                var matchingIndex = secondSeamStart + result.NumDuplicates - 1 - i;
+                var matchingIndex = secondSeamStart + numDuplicates - 1 - i;
                 var first = surface.TransformFrom2DTo3D(vertices[i].Coordinates);
                 var second = surface.TransformFrom2DTo3D(vertices[matchingIndex].Coordinates);
                 var distance = Vector3.Distance(first, second);

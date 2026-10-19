@@ -161,15 +161,13 @@ namespace TVGL
         /// <returns>The corresponding point on the cone.</returns>
         public override Vector3 TransformFrom2DTo3D(Vector2 point)
         {
-            ;
-            var sectorYDirection = Axis.Cross(-PerpXDir).Normalize();
             var angle = Math.Atan2(point.Y, point.X) / sinAperture;
             var distanceDownCone = point.Length();
             var radius = sinAperture * distanceDownCone;
             var height = radius / Aperture;
             var result = Apex + height * Axis;
-            result -= radius * Math.Cos(angle) * PerpXDir;
-            result += radius * Math.Sin(angle) * sectorYDirection;
+            result += radius * Math.Cos(angle) * SectorCenterDirection;
+            result += radius * Math.Sin(angle) * SectorYDirection;
             return result;
         }
 
@@ -196,7 +194,9 @@ namespace TVGL
         /// </summary>
         private Vector3 perpXDir = Vector3.Null;
 
-        private Vector3 PerpYDir => Axis.Cross(PerpXDir);
+        private Vector3 SectorCenterDirection => -PerpXDir;
+
+        private Vector3 SectorYDirection => Axis.Cross(SectorCenterDirection).Normalize();
 
 
         /// <summary>
@@ -227,8 +227,8 @@ namespace TVGL
                 var distanceDownCone = v.Length();
                 // Find the point's azimuth around the 3D cone. Multiplying that azimuth by sinAperture compresses
                 // one full 3D revolution into the angular width of the developed sector described above.
-                var x = PerpXDir.Dot(v);
-                var y = PerpYDir.Dot(v);
+                var x = SectorCenterDirection.Dot(v);
+                var y = SectorYDirection.Dot(v);
                 var unwrappedAngle = Math.Atan2(y, x) * sinAperture; // recall that Atan2 returns -pi to +pi,
                                                                      // sinAperture attenuates this so that a gap
                                                                      // or seam is left...centered at 180 degrees

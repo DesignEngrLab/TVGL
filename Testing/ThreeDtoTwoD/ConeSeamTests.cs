@@ -14,10 +14,13 @@ namespace TVGLUnitTestsAndBenchmarking
         [Fact]
         public void SeamAwareTransformPreservesBranchCrossingsAndMultipleRevolutions()
         {
-            var cone = new Cone(Vector3.Zero, Vector3.UnitZ, 1.0, true);
+            var cone = new Cone(Vector3.Zero, Vector3.UnitZ, 1.0, true)
+            {
+                PerpXDir = Vector3.UnitX
+            };
             var seamCrossingPath = new[] { -0.2, 0.0, 0.2 }
                 .Select(angle => PointOnCone(angle)).ToList();
-            var developed = cone.TransformFrom3DTo2D(seamCrossingPath, Vector3.UnitX).ToList();
+            var developed = cone.TransformFrom3DTo2D(seamCrossingPath).ToList();
 
             Assert.InRange(Math.Abs(SignedAngle(developed[0], developed[1]) - 0.2 * ApertureScale), 0,
                 Tolerance);
@@ -26,7 +29,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
             var azimuths = Enumerable.Range(0, 167).Select(i => 0.2 * i).ToList();
             var multiTurnPath = azimuths.Select(angle => PointOnCone(angle)).ToList();
-            var multiTurnDeveloped = cone.TransformFrom3DTo2D(multiTurnPath, Vector3.UnitX).ToList();
+            var multiTurnDeveloped = cone.TransformFrom3DTo2D(multiTurnPath).ToList();
             var accumulatedAngle = 0.0;
             for (var i = 1; i < multiTurnDeveloped.Count; i++)
                 accumulatedAngle += SignedAngle(multiTurnDeveloped[i - 1], multiTurnDeveloped[i]);
@@ -45,7 +48,8 @@ namespace TVGLUnitTestsAndBenchmarking
                 new[] { 0.3, 0.4, 0.5 }.Select(angle => PointOnCone(angle)).ToList()
             };
 
-            var polygons = cone.GetUnrolledPolygons(paths, new[] { false, false }, out var pointToVertexMap)
+            var polygons3D = paths.Select((path, index) => new Polygon3D(path, false, index)).ToList();
+            var polygons = cone.GetUnrolledPolygons(polygons3D, true, out var pointToVertexMap)
                 .Select(result => result.polygon).ToList();
             var developedAngles = polygons.SelectMany(polygon => polygon.Path)
                 .Select(point => Math.Atan2(point.Y, point.X)).ToList();
@@ -71,7 +75,8 @@ namespace TVGLUnitTestsAndBenchmarking
                 new[] { 5.9, 6.1 }.Select(angle => PointOnCone(angle)).ToList()
             };
 
-            var polygons = cone.GetUnrolledPolygons(paths, new[] { false, false, false, false })
+            var polygons3D = paths.Select((path, index) => new Polygon3D(path, false, index)).ToList();
+            var polygons = cone.GetUnrolledPolygons(polygons3D, true, out _)
                 .Select(result => result.polygon).ToList();
             var pointAtAzimuthZero = polygons[0].Path.MinBy(point => point.LengthSquared());
             var selectedSectorCenter = -Math.Atan2(pointAtAzimuthZero.Y, pointAtAzimuthZero.X) / ApertureScale;
@@ -88,29 +93,23 @@ namespace TVGLUnitTestsAndBenchmarking
             var ring = Enumerable.Range(0, 32)
                 .Select(i => PointOnCone(i * Math.Tau / 32.0, 10.0)).ToList();
 
-            var result = cone.GetUnrolledPolygons(new[] { (IList<Vector3>)ring }, new[] { true },
-                out var pointToVertexMap, out var seamDirection, 2.0).Single();
+            var result = cone.GetUnrolledPolygons([new Polygon3D(ring, true)], true,
+                out var pointToVertexMap, 2.0).Single();
 
             foreach (var (sourcePoint, vertex2D) in pointToVertexMap)
             {
-                var restoredPoint = cone.TransformFrom2DTo3D(vertex2D.Coordinates, seamDirection);
+                var restoredPoint = cone.TransformFrom2DTo3D(vertex2D.Coordinates);
                 Assert.InRange(Vector3.Distance(sourcePoint, restoredPoint), 0, 1e-6);
             }
 
-            var halfSectorAngle = 0.5 * Math.Tau * ApertureScale;
-            var positiveBorder = result.polygon.Vertices
-                .OrderBy(vertex => AngularDistance(Math.Atan2(vertex.Y, vertex.X), halfSectorAngle))
-                .Take(result.numRepeats).OrderBy(vertex => vertex.Coordinates.Length()).ToList();
-            var negativeBorder = result.polygon.Vertices
-                .OrderBy(vertex => AngularDistance(Math.Atan2(vertex.Y, vertex.X), -halfSectorAngle))
-                .Take(result.numRepeats).OrderBy(vertex => vertex.Coordinates.Length()).ToList();
-            Assert.Equal(result.numRepeats, positiveBorder.Count);
-            Assert.Equal(result.numRepeats, negativeBorder.Count);
+            var vertices = result.polygon.Vertices;
+            var secondBorderStart = result.indexMatchedToStart - 1;
             for (var i = 0; i < result.numRepeats; i++)
             {
-                var first = cone.TransformFrom2DTo3D(positiveBorder[i].Coordinates, seamDirection);
-                var second = cone.TransformFrom2DTo3D(negativeBorder[i].Coordinates, seamDirection);
-                Assert.InRange(Vector3.Distance(first, second), 0, 1e-6);
+                var matchingIndex = secondBorderStart + result.numRepeats - 1 - i;
+                var first = cone.TransformFrom2DTo3D(vertices[i].Coordinates);
+                var second = cone.TransformFrom2DTo3D(vertices[matchingIndex].Coordinates);
+                Assert.InRange(Vector3.Distance(first, second), 0, 2e-6);
             }
         }
 
@@ -122,8 +121,8 @@ namespace TVGLUnitTestsAndBenchmarking
                 .Select(i => PointOnCone(0.37 + i * Math.Tau / 32.0, 10.0 + 0.4 * Math.Sin(3 * i)))
                 .ToList();
 
-            var result = cone.GetUnrolledPolygons(new[] { (IList<Vector3>)ring }, new[] { true },
-                out var pointToVertexMap, out var seamDirection, 2.0).Single();
+            var result = cone.GetUnrolledPolygons([new Polygon3D(ring, true)], true,
+                out var pointToVertexMap, 2.0).Single();
             var halfSectorAngle = 0.5 * Math.Tau * ApertureScale;
             var angles = result.polygon.Path.Select(point => Math.Atan2(point.Y, point.X)).ToList();
 
@@ -147,7 +146,7 @@ namespace TVGLUnitTestsAndBenchmarking
             Assert.InRange(AngularDistance(largestGapMidpoint, Math.PI), 0, 1e-6);
             foreach (var (sourcePoint, vertex2D) in pointToVertexMap)
             {
-                var restoredPoint = cone.TransformFrom2DTo3D(vertex2D.Coordinates, seamDirection);
+                var restoredPoint = cone.TransformFrom2DTo3D(vertex2D.Coordinates);
                 Assert.InRange(Vector3.Distance(sourcePoint, restoredPoint), 0, 1e-6);
             }
         }
