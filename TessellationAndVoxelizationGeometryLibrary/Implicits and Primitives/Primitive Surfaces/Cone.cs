@@ -136,7 +136,6 @@ namespace TVGL
             rVector2 = rVector2.TransformNoTranslate(transformMatrix);
             Aperture = Math.Sqrt((rVector1.LengthSquared() + rVector2.LengthSquared()) / 2);
             perpXDir = Vector3.Null;
-            perpYDir = Vector3.Null;
             if (!transformedPerpXDir.IsNull())
                 PerpXDir = transformedPerpXDir;
             // this is the same procedure for how Radius is determined in the cylinder
@@ -150,27 +149,26 @@ namespace TVGL
         /// <param name="point">The point.</param>
         /// <returns>Vector2.</returns>
         public override Vector2 TransformFrom3DTo2D(Vector3 point)
-            => TransformFrom3DTo2D([point], PerpXDir).First();
+            => TransformFrom3DTo2D([point]).First();
 
         /// <summary>
         /// Rolls a point from a developed cone back onto the cone using the same seam direction that was used
         /// to develop it.
         /// </summary>
         /// <param name="point">The point in the developed cone.</param>
-        /// <param name="seamDirection">
         /// A direction perpendicular to <see cref="Axis"/> that points from the axis toward the seam.
         /// </param>
         /// <returns>The corresponding point on the cone.</returns>
         public override Vector3 TransformFrom2DTo3D(Vector2 point)
         {
-            var sectorCenterDirection = -PerpXDir;
-            var sectorYDirection = Axis.Cross(sectorCenterDirection).Normalize();
+            ;
+            var sectorYDirection = Axis.Cross(-PerpXDir).Normalize();
             var angle = Math.Atan2(point.Y, point.X) / sinAperture;
             var distanceDownCone = point.Length();
             var radius = sinAperture * distanceDownCone;
             var height = radius / Aperture;
             var result = Apex + height * Axis;
-            result += radius * Math.Cos(angle) * sectorCenterDirection;
+            result -= radius * Math.Cos(angle) * PerpXDir;
             result += radius * Math.Sin(angle) * sectorYDirection;
             return result;
         }
@@ -186,31 +184,11 @@ namespace TVGL
             {
                 if (perpXDir.IsNull())
                     perpXDir = Axis.GetPerpendicularDirection();
-                else
-                {
-                    var axisDirection = Axis.Normalize();
-                    perpXDir -= perpXDir.Dot(axisDirection) * axisDirection;
-                    perpXDir = perpXDir.LengthSquared().IsNegligible()
-                        ? Axis.GetPerpendicularDirection()
-                        : perpXDir.Normalize();
-                }
                 return perpXDir;
             }
             set
             {
-                if (Axis.LengthSquared().IsNegligible())
-                {
-                    perpXDir = value;
-                    perpYDir = Vector3.Null;
-                    return;
-                }
-                var axisDirection = Axis.Normalize();
-                var radialDirection = value - value.Dot(axisDirection) * axisDirection;
-                if (radialDirection.LengthSquared().IsNegligible())
-                    throw new ArgumentException("The cone perpendicular X direction must be perpendicular to the cone axis.",
-                        nameof(value));
-                perpXDir = radialDirection.Normalize();
-                perpYDir = Vector3.Null;
+                perpXDir = value.Normalize();
             }
         }
         /// <summary>
@@ -218,19 +196,7 @@ namespace TVGL
         /// </summary>
         private Vector3 perpXDir = Vector3.Null;
 
-        private Vector3 PerpYDir
-        {
-            get
-            {
-                if (perpYDir.IsNull())
-                    perpYDir = Axis.Cross(PerpXDir);
-                return perpYDir;
-            }
-        }
-        /// <summary>
-        /// The face y dir
-        /// </summary>
-        private Vector3 perpYDir = Vector3.Null;
+        private Vector3 PerpYDir => Axis.Cross(PerpXDir);
 
 
         /// <summary>
@@ -241,33 +207,7 @@ namespace TVGL
         /// <param name="points">The ordered points on the cone.</param>
         /// <returns>The points on the developed (flattened) cone.</returns>
         public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
-            => TransformFrom3DTo2D(points, PerpXDir);
-
-        /// <summary>
-        /// Develops an ordered path on the cone using the supplied radial direction as the seam of the
-        /// flattened cone. The cone itself is not modified, allowing different callers to choose different
-        /// seams for the same surface.
-        /// </summary>
-        /// <param name="points">The ordered points on the cone.</param>
-        /// <param name="seamDirection">
-        /// A direction perpendicular to <see cref="Axis"/> that points from the axis toward the desired seam.
-        /// Any component parallel to the axis is removed before the direction is used.
-        /// </param>
-        /// <returns>The points on the developed (flattened) cone.</returns>
-        public IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, Vector3 seamDirection)
         {
-            var axisDirection = Axis.Normalize();
-            seamDirection -= seamDirection.Dot(axisDirection) * axisDirection;
-            if (seamDirection.LengthSquared().IsNegligible())
-                throw new ArgumentException("The cone seam direction must have a component perpendicular to the cone axis.",
-                    nameof(seamDirection));
-
-            seamDirection = seamDirection.Normalize();
-            // Atan2 places its branch cut opposite its local positive-X direction. Point positive X away from
-            // the requested seam so that the -pi/+pi discontinuity lies exactly on seamDirection.
-            var sectorCenterDirection = -seamDirection;
-            var sectorYDirection = axisDirection.Cross(sectorCenterDirection).Normalize();
-
             // Cut the cone to its center and lay it flat. A full 2*pi turn around the 3D
             // cone occupies only 2*pi*sin(apertureAngle) radians in that flat sector. Instead of
             // repeating every 2*pi like a cylinder, the sector repeats every 2*pi*sin(apertureAngle).
@@ -287,8 +227,8 @@ namespace TVGL
                 var distanceDownCone = v.Length();
                 // Find the point's azimuth around the 3D cone. Multiplying that azimuth by sinAperture compresses
                 // one full 3D revolution into the angular width of the developed sector described above.
-                var x = sectorCenterDirection.Dot(v);
-                var y = sectorYDirection.Dot(v);
+                var x = PerpXDir.Dot(v);
+                var y = PerpYDir.Dot(v);
                 var unwrappedAngle = Math.Atan2(y, x) * sinAperture; // recall that Atan2 returns -pi to +pi,
                                                                      // sinAperture attenuates this so that a gap
                                                                      // or seam is left...centered at 180 degrees
@@ -319,120 +259,120 @@ namespace TVGL
         /// <param name="point">The point.</param>
         /// <returns>A Vector3.</returns>
         public override Vector3 GetNormalAtPoint(Vector3 point)
-{
-    var a = (point - Apex);
-    var b = a.Cross(Axis);
-    var c = Axis.Cross(b).Normalize();  // outward from the axis to the point
-    var outwardVector = (c - (Axis * Aperture)) / Math.Sqrt(1 + Aperture * Aperture);
-    if (IsPositive.GetValueOrDefault(true)) return outwardVector;
-    else return -outwardVector;
-}
+        {
+            var a = (point - Apex);
+            var b = a.Cross(Axis);
+            var c = Axis.Cross(b).Normalize();  // outward from the axis to the point
+            var outwardVector = (c - (Axis * Aperture)) / Math.Sqrt(1 + Aperture * Aperture);
+            if (IsPositive.GetValueOrDefault(true)) return outwardVector;
+            else return -outwardVector;
+        }
 
-/// <summary>
-/// Points the membership.
-/// </summary>
-/// <param name="point">The point.</param>
-/// <returns>System.Double.</returns>
-public override double DistanceToPoint(Vector3 point)
-{
-    var v = point - Apex;
-    var distAtCommonDepth = v.Cross(Axis).Length() - Aperture * v.Dot(Axis);
-    var d = distAtCommonDepth * cosAperture;
-    if (IsPositive.GetValueOrDefault(true)) return d;
-    else return -d;
-}
+        /// <summary>
+        /// Points the membership.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>System.Double.</returns>
+        public override double DistanceToPoint(Vector3 point)
+        {
+            var v = point - Apex;
+            var distAtCommonDepth = v.Cross(Axis).Length() - Aperture * v.Dot(Axis);
+            var d = distAtCommonDepth * cosAperture;
+            if (IsPositive.GetValueOrDefault(true)) return d;
+            else return -d;
+        }
 
-public override Vector3 ClosestPointOnSurfaceToPoint(Vector3 point)
-{
-    var v = point - Apex;
-    var outOfPlane = v.Cross(Axis).Normalize();
-    var vertDir = Axis.Cross(outOfPlane).Normalize();
-    var onSurfDir = (Axis + Aperture * vertDir).Normalize();
-    // onSurfDir is now the vector on the cone that is in the same plane as the point.
-    // find the closest point on the line defined by this vector (and the Apex as anchor)
-    // to the point
-    return Apex + ((point - Apex).Dot(onSurfDir)) * onSurfDir;
-}
+        public override Vector3 ClosestPointOnSurfaceToPoint(Vector3 point)
+        {
+            var v = point - Apex;
+            var outOfPlane = v.Cross(Axis).Normalize();
+            var vertDir = Axis.Cross(outOfPlane).Normalize();
+            var onSurfDir = (Axis + Aperture * vertDir).Normalize();
+            // onSurfDir is now the vector on the cone that is in the same plane as the point.
+            // find the closest point on the line defined by this vector (and the Apex as anchor)
+            // to the point
+            return Apex + ((point - Apex).Dot(onSurfDir)) * onSurfDir;
+        }
 
-protected override void CalculateIsPositive()
-{
-    if (Faces == null || !Faces.Any() || Area.IsNegligible()) return;
-    if ((LargestFace.Center - Apex).Dot(Axis) < 0)
-        Axis *= -1;
-    var innerRefPoint = Apex + (LargestFace.Center - Apex).Dot(Axis) * Axis;
-    isPositive = (LargestFace.Center - innerRefPoint).Dot(LargestFace.Normal) > 0;
-}
+        protected override void CalculateIsPositive()
+        {
+            if (Faces == null || !Faces.Any() || Area.IsNegligible()) return;
+            if ((LargestFace.Center - Apex).Dot(Axis) < 0)
+                Axis *= -1;
+            var innerRefPoint = Apex + (LargestFace.Center - Apex).Dot(Axis) * Axis;
+            isPositive = (LargestFace.Center - innerRefPoint).Dot(LargestFace.Normal) > 0;
+        }
 
-protected override void SetPrimitiveLimits()
-{
-    if (double.IsFinite(Length))
-    {
-        var top = Apex;
-        var bottom = Apex + Length * Axis;
-        var radius = Length * Aperture;
-        var xFactor = Math.Sqrt(1 - Axis.X * Axis.X);
-        var yFactor = Math.Sqrt(1 - Axis.Y * Axis.Y);
-        var zFactor = Math.Sqrt(1 - Axis.Z * Axis.Z);
+        protected override void SetPrimitiveLimits()
+        {
+            if (double.IsFinite(Length))
+            {
+                var top = Apex;
+                var bottom = Apex + Length * Axis;
+                var radius = Length * Aperture;
+                var xFactor = Math.Sqrt(1 - Axis.X * Axis.X);
+                var yFactor = Math.Sqrt(1 - Axis.Y * Axis.Y);
+                var zFactor = Math.Sqrt(1 - Axis.Z * Axis.Z);
 
-        MinX = Math.Min(top.X, bottom.X - xFactor * radius);
-        MaxX = Math.Max(top.X, bottom.X + xFactor * radius);
-        MinY = Math.Min(top.Y, bottom.Y - yFactor * radius);
-        MaxY = Math.Max(top.Y, bottom.Y + yFactor * radius);
-        MinZ = Math.Min(top.Z, bottom.Z - zFactor * radius);
-        MaxZ = Math.Max(top.Z, bottom.Z + zFactor * radius);
-    }
-    else
-    {
-        MinX = MinY = MinZ = double.NegativeInfinity;
-        MaxX = MaxY = MaxZ = double.PositiveInfinity;
-    }
-}
-public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 p, Vector3 d)
-{
-    d = d.Normalize();
+                MinX = Math.Min(top.X, bottom.X - xFactor * radius);
+                MaxX = Math.Max(top.X, bottom.X + xFactor * radius);
+                MinY = Math.Min(top.Y, bottom.Y - yFactor * radius);
+                MaxY = Math.Max(top.Y, bottom.Y + yFactor * radius);
+                MinZ = Math.Min(top.Z, bottom.Z - zFactor * radius);
+                MaxZ = Math.Max(top.Z, bottom.Z + zFactor * radius);
+            }
+            else
+            {
+                MinX = MinY = MinZ = double.NegativeInfinity;
+                MaxX = MaxY = MaxZ = double.PositiveInfinity;
+            }
+        }
+        public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 p, Vector3 d)
+        {
+            d = d.Normalize();
 
-    //var u = Axis; // expected to be unit length
-    var pDa = p - Apex;
+            //var u = Axis; // expected to be unit length
+            var pDa = p - Apex;
 
-    // Handle the special case where the line passes through the apex.
-    if (pDa.IsAlignedOrReverse(d, 1 - Constants.BaseTolerance))
-    {
-        yield return (Apex, -pDa.Dot(d));
-        yield break;
-    }
+            // Handle the special case where the line passes through the apex.
+            if (pDa.IsAlignedOrReverse(d, 1 - Constants.BaseTolerance))
+            {
+                yield return (Apex, -pDa.Dot(d));
+                yield break;
+            }
 
-    var mSqd = Aperture * Aperture;
-    var onePlusMSqd = 1.0 + mSqd;
+            var mSqd = Aperture * Aperture;
+            var onePlusMSqd = 1.0 + mSqd;
 
-    var dDotB = d.Dot(Axis); //using b instead of A (since 'a' is used for Apex)
-    var pDaDotB = pDa.Dot(Axis);
+            var dDotB = d.Dot(Axis); //using b instead of A (since 'a' is used for Apex)
+            var pDaDotB = pDa.Dot(Axis);
 
-    var a = 1 - onePlusMSqd * dDotB * dDotB;
-    var b = 2.0 * (d.Dot(pDa) - onePlusMSqd * dDotB * pDaDotB);
-    var c = pDa.LengthSquared() - onePlusMSqd * pDaDotB * pDaDotB;
+            var a = 1 - onePlusMSqd * dDotB * dDotB;
+            var b = 2.0 * (d.Dot(pDa) - onePlusMSqd * dDotB * pDaDotB);
+            var c = pDa.LengthSquared() - onePlusMSqd * pDaDotB * pDaDotB;
 
-    (var root1, var root2) = PolynomialSolve.Quadratic(a, b, c);
+            (var root1, var root2) = PolynomialSolve.Quadratic(a, b, c);
 
-    if (!root1.IsRealNumber)
-        yield break; // no need to check root2 - both are either real or imaginary
+            if (!root1.IsRealNumber)
+                yield break; // no need to check root2 - both are either real or imaginary
 
-    if (!root1.Real.IsPracticallySame(root2.Real))
-    {
-        var iPt = p + root1.Real * d;
-        if ((iPt - Apex).Dot(Axis) >= 0)
-            yield return (iPt, root1.Real);
-        iPt = p + root2.Real * d;
-        if ((iPt - Apex).Dot(Axis) >= 0)
-            yield return (iPt, root2.Real);
-    }
-    else
-    {
-        var iPt = p + root1.Real * d;
-        if ((iPt - Apex).Dot(Axis) >= 0)
-            yield return (iPt, root1.Real);
-    }
+            if (!root1.Real.IsPracticallySame(root2.Real))
+            {
+                var iPt = p + root1.Real * d;
+                if ((iPt - Apex).Dot(Axis) >= 0)
+                    yield return (iPt, root1.Real);
+                iPt = p + root2.Real * d;
+                if ((iPt - Apex).Dot(Axis) >= 0)
+                    yield return (iPt, root2.Real);
+            }
+            else
+            {
+                var iPt = p + root1.Real * d;
+                if ((iPt - Apex).Dot(Axis) >= 0)
+                    yield return (iPt, root1.Real);
+            }
 
-}
+        }
 
     }
 }

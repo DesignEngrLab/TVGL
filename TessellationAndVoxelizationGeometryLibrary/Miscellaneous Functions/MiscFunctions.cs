@@ -2347,10 +2347,10 @@ namespace TVGL
         /// Common search terms: "line triangle intersection", "segment face intersection", "ray triangle hit".
         /// </remarks>
         public static Vector3 PointOnTriangleFromLineSegment(this TriangleFace face, Vector3 point1,
-            Vector3 point2, out double relativeDistance, bool onBoundaryIsInside = true)
+            Vector3 point2, out double relativeDistance)
         {
             var positions = face.Vertices.Select(vertex => vertex.Coordinates).ToList();
-            return PointOnTriangleFromLineSegment(positions, face.Normal, point1, point2, out relativeDistance, onBoundaryIsInside);
+            return PointOnTriangleFromLineSegment(positions, face.Normal, point1, point2, out relativeDistance);
         }
 
         /// <summary>
@@ -2361,19 +2361,18 @@ namespace TVGL
         /// <param name="point1">The starting point of the line segment.</param>
         /// <param name="point2">The ending point of the line segment.</param>
         /// <param name="relativeDistance">The fractional distance along the line segment where the intersection with the triangle's plane occurs.</param>
-        /// <param name="onBoundaryIsInside">If set to <c>true</c>, an intersection point lying on the boundary of the triangle is considered valid.</param>
         /// <returns>The 3D coordinate of the intersection point if it lies within the triangle's boundaries; otherwise, returns Vector3.Null.</returns>
         /// <remarks>
         /// This method is similar to the TriangleFace overload but allows you to define the triangle directly from points. For the intersection to be valid, `point1` and `point2` must be on opposite sides of the triangle's plane.
         /// Common search terms: "line triangle intersection", "segment face intersection", "ray triangle hit".
         /// </remarks>
         public static Vector3 PointOnTriangleFromLineSegment(this List<Vector3> vertices, Vector3 normal, Vector3 point1,
-            Vector3 point2, out double relativeDistance, bool onBoundaryIsInside = true)
+            Vector3 point2, out double relativeDistance)
         {
             var distanceToOrigin = normal.Dot(vertices[0]);
             var newPoint = PointOnPlaneFromIntersectingLineSegment(normal, distanceToOrigin, point1, point2, out relativeDistance);
             if (newPoint.IsNull()) return Vector3.Null;
-            return IsVertexInsideTriangle(vertices, newPoint, onBoundaryIsInside) ? newPoint : Vector3.Null;
+            return IsVertexInsideTriangle(vertices, newPoint) ? newPoint : Vector3.Null;
         }
 
         /// <summary>
@@ -2383,14 +2382,13 @@ namespace TVGL
         /// <param name="point3D">The origin point of the ray.</param>
         /// <param name="direction">The direction vector of the ray.</param>
         /// <param name="signedDistance">The distance from the ray's origin to the intersection point. A positive value indicates the intersection is in the direction of the ray.</param>
-        /// <param name="onBoundaryIsInside">If set to <c>true</c>, an intersection on the triangle's boundary is considered valid.</param>
         /// <returns>The 3D coordinate of the intersection point if the ray hits the triangle; otherwise, returns Vector3.Null.</returns>
         /// <remarks>
         /// This method performs a ray-triangle intersection test. It first finds the intersection with the triangle's plane and then checks if the hit point is inside the triangle's boundaries.
         /// Common search terms: "ray triangle intersection", "raycasting", "ray triangle hit test".
         /// </remarks>
         public static Vector3 PointOnTriangleFromRay(this TriangleFace face, Vector3 point3D, Vector3 direction,
-            out double signedDistance, bool onBoundaryIsInside = true)
+            out double signedDistance)
         {
             var distanceToOrigin = face.Normal.Dot(face.A.Coordinates);
             var newPoint = PointOnPlaneFromRay(face.Normal, distanceToOrigin, point3D, direction, out signedDistance);
@@ -2685,22 +2683,9 @@ namespace TVGL
         /// Common search terms: "point in triangle test", "barycentric coordinates", "is point on face".
         /// </remarks>
         public static bool IsVertexInsideTriangle(TriangleFace face, Vector3 q)
-        {
-            if (q.X < face.A.X && q.X < face.B.X && q.X < face.C.X) return false;
-            if (q.X > face.A.X && q.X > face.B.X && q.X > face.C.X) return false;
-            if (q.Y < face.A.Y && q.Y < face.B.Y && q.Y < face.C.Y) return false;
-            if (q.Y > face.A.Y && q.Y > face.B.Y && q.Y > face.C.Y) return false;
-            if (q.Z < face.A.Z && q.Z < face.B.Z && q.Z < face.C.Z) return false;
-            if (q.Z > face.A.Z && q.Z > face.B.Z && q.Z > face.C.Z) return false;
-            var aToQ = q - face.A.Coordinates;
-            var aToB = face == face.AB.OwnedFace ? face.AB.Vector : -face.AB.Vector;
-            var aToC = face == face.CA.OwnedFace ? -face.CA.Vector : face.CA.Vector;
-            if (aToB.Cross(aToQ).Dot(aToQ.Cross(aToC)) < 0) return false;
-            var bToQ = q - face.B.Coordinates;
-            var bToC = face == face.BC.OwnedFace ? face.BC.Vector : -face.BC.Vector;
-            var bToA = -aToB;
-            return bToC.Cross(bToQ).Dot(bToQ.Cross(bToA)) > 0;
-        }
+        => IsVertexInsideTriangle(face.A.Coordinates, face.B.Coordinates,
+                face.C.Coordinates, q);
+
         /// <summary>
         /// Determines if a point is inside a triangle defined by a list of vertices.
         /// </summary>
@@ -2712,12 +2697,9 @@ namespace TVGL
         /// This method uses the barycentric coordinate technique to determine if the point lies within the triangle's boundaries. It assumes the point is coplanar with the triangle.
         /// Common search terms: "point in triangle test", "barycentric coordinates", "is point in polygon".
         /// </remarks>
-        public static bool IsVertexInsideTriangle(IList<Vertex> triangle, Vector3 vertexInQuestion,
-            bool onBoundaryIsInside = true)
-        {
-            return IsVertexInsideTriangle(new[] { triangle[0].Coordinates, triangle[1].Coordinates, triangle[2].Coordinates },
-                vertexInQuestion, onBoundaryIsInside);
-        }
+        public static bool IsVertexInsideTriangle(IList<Vertex> triangle, Vector3 vertexInQuestion)
+        => IsVertexInsideTriangle(triangle[0].Coordinates, triangle[1].Coordinates,
+                triangle[2].Coordinates, vertexInQuestion);
 
         /// <summary>
         /// Returns whether a vertex lies on a triangle. User can specify whether the edges of the
@@ -2729,23 +2711,37 @@ namespace TVGL
         /// <param name="onBoundaryIsInside">The on boundary is inside.</param>
         /// <returns>bool.</returns>
         /// <exception cref="Exception">Incorrect number of points in triangle</exception>
-        public static bool IsVertexInsideTriangle(IList<Vector3> triangle, Vector3 pointInQuestion,
-            bool onBoundaryIsInside = true)
+        public static bool IsVertexInsideTriangle(IList<Vector3> triangle, Vector3 pointInQuestion)
         {
             if (triangle.Count != 3) throw new Exception("Incorrect number of points in triangle");
-            var q = pointInQuestion;
-            var a = triangle[0];
-            var b = triangle[1];
-            var c = triangle[2];
-            var aToQ = q - a;
-            var aToB = b - a;
-            var aToC = c - a;
-            if (aToB.Cross(aToQ).Dot(aToQ.Cross(aToC)) < 0) return false;
+            return IsVertexInsideTriangle(triangle[0], triangle[1], triangle[2], pointInQuestion);
+        }
 
-            var bToQ = q - b;
-            var bToC = c - b;
+        /// <summary>
+        /// Determines whether point q lies inside the triangle defined by vertices A, B, and C in 3D space.
+        /// </summary>
+        /// <remarks>Uses edge-orientation tests based on cross and dot products and a small tolerance
+        /// (IsNegativeNonNegligible) to account for floating-point imprecision. Behavior for points not coplanar with
+        /// the triangle depends on the vector operations and tolerance semantics.</remarks>
+        /// <param name="A">First vertex of the triangle.</param>
+        /// <param name="B">Second vertex of the triangle.</param>
+        /// <param name="C">Third vertex of the triangle.</param>
+        /// <param name="q">Point to test for containment.</param>
+        /// <returns>true if q lies inside or on the boundary of triangle ABC within numerical tolerance; otherwise false.</returns>
+        public static bool IsVertexInsideTriangle(Vector3 A, Vector3 B, Vector3 C, Vector3 q)
+        {
+            var aToQ = q - A;
+            var aToB = B - A;
+            var aToC = C - A;
+            if (aToB.Cross(aToQ).Dot(aToQ.Cross(aToC)).IsNegativeNonNegligible()) return false;
+            var bToQ = q - B;
+            var bToC = C - B;
             var bToA = -aToB;
-            return bToC.Cross(bToQ).Dot(bToQ.Cross(bToA)) > 0;
+            if (bToC.Cross(bToQ).Dot(bToQ.Cross(bToA)).IsNegativeNonNegligible()) return false;
+            var cToA = -aToC;
+            var cToQ = q - C;
+            var cToB = -bToC;
+            return !(cToA.Cross(cToQ).Dot(cToQ.Cross(cToB)).IsNegativeNonNegligible());
         }
 
         /// <summary>
@@ -3162,7 +3158,7 @@ namespace TVGL
             for (int i = coords.Count - 1; i >= 0; i--)
                 if (radiiSqd[i] < tooSmallRadii)
                     coords.RemoveAt(i);
-            
+
             return coords.GetWindingAngles(center, isClosed, out minAngle, out maxAngle);
         }
 
