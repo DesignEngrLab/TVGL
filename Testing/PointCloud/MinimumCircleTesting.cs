@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using TVGL;
+using Xunit;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -9,6 +10,30 @@ namespace TVGLUnitTestsAndBenchmarking
     {
         static Random r = new Random();
         static double r100 => 200.0 * r.NextDouble() - 100.0;
+
+        [Fact]
+        public void MinimumCircleExpandsForToleratedBoundaryRoundoff()
+        {
+            const double radius = 1_000_000.0;
+            var center = new Vector2(100_000_000.0, -100_000_000.0);
+            var nominalTop = center.Y + radius;
+            var points = new[]
+            {
+                center + new Vector2(-radius, 0.0),
+                center + new Vector2(radius, 0.0),
+                new Vector2(center.X, Math.BitIncrement(nominalTop))
+            };
+
+            var circle = points.MinimumCircle();
+            var topDistanceSquared = (points[2] - circle.Center).LengthSquared();
+
+            Assert.True(topDistanceSquared > radius * radius,
+                "The test point must be marginally outside the nominal two-point circle.");
+            Assert.True(topDistanceSquared <= circle.RadiusSquared,
+                "The returned circle must enclose a point accepted by the boundary tolerance.");
+            Assert.Equal(center.X, circle.Center.X);
+            Assert.Equal(center.Y, circle.Center.Y);
+        }
 
         internal static void Test1(int dataSize, int numTests)
         {
