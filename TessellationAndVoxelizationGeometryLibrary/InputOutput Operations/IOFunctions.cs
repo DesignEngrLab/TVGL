@@ -145,6 +145,12 @@ namespace TVGL
                 case FileType.OBJ:
                     solidInner = GetMostSignificantSolid(OBJFileData.OpenSolids(s, filename, tsBuildOptions), out _);
                     break;
+                case FileType.U3D:
+                    solidInner = GetMostSignificantSolid(U3DFileData.OpenSolids(s, filename, tsBuildOptions), out _);
+                    break;
+                case FileType.PRC:
+                    solidInner = GetMostSignificantSolid(PRCFileData.OpenSolidAssembly(s, filename, tsBuildOptions), out _);
+                    break;
                 case FileType.OFF:
                     solidInner = OFFFileData.OpenSolid(s, filename, tsBuildOptions);
                     break;
@@ -310,6 +316,12 @@ namespace TVGL
                     case FileType.OBJ:
                         tessellatedSolids = OBJFileData.OpenSolids(s, filename, tsBuildOptions);
                         break;
+                    case FileType.U3D:
+                        tessellatedSolids = U3DFileData.OpenSolids(s, filename, tsBuildOptions);
+                        break;
+                    case FileType.PRC:
+                        tessellatedSolids = PRCFileData.OpenSolids(s, filename, tsBuildOptions);
+                        break;
                     case FileType.OFF:
                     case FileType.PLY_ASCII:
                     case FileType.PLY_Binary:
@@ -408,6 +420,12 @@ namespace TVGL
 
                     case FileType.OBJ:
                         solidAssembly = new SolidAssembly(OBJFileData.OpenSolids(s, filename, tsBuildOptions));
+                        break;
+                    case FileType.U3D:
+                        solidAssembly = new SolidAssembly(U3DFileData.OpenSolids(s, filename, tsBuildOptions));
+                        break;
+                    case FileType.PRC:
+                        solidAssembly = PRCFileData.OpenSolidAssembly(s, filename, tsBuildOptions);
                         break;
 
                     case FileType.OFF:
@@ -694,6 +712,8 @@ namespace TVGL
                 case "model": return FileType.Model3MF;
                 case "amf": return FileType.AMF;
                 case "obj": return FileType.OBJ;
+                case "u3d": return FileType.U3D;
+                case "prc": return FileType.PRC;
                 case "off": return FileType.OFF;
                 case "ply": return FileType.PLY_ASCII;
                 case "shell": return FileType.SHELL;
@@ -724,6 +744,8 @@ namespace TVGL
                 case FileType.Model3MF: return "model";
                 case FileType.AMF: return "amf";
                 case FileType.OBJ: return "obj";
+                case FileType.U3D: return "u3d";
+                case FileType.PRC: return "prc";
                 case FileType.OFF: return "off";
                 case FileType.PLY_ASCII:
                 case FileType.PLY_Binary: return "ply";

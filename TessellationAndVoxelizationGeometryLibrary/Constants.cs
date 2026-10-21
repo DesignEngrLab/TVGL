@@ -380,11 +380,22 @@ namespace TVGL
         /// </summary>
         TVGLz,
 
+        /// <summary>
+        /// Universal 3D, including the Right Hemisphere Adobe mesh extension.
+        /// </summary>
+        U3D = 19,
+
+        /// <summary>
+        /// PRC (ISO 14739-1), the 3D format embedded in 3D PDFs. Its display tessellation and
+        /// product structure are read.
+        /// </summary>
+        PRC = 20,
+
         // now the 2D formats
         /// <summary>
         /// Simply a set of 2D coordinates, no additional information
         /// </summary>
-        CSV,
+        CSV = 13,
 
         /// <summary>
         /// S Vector Graphics
