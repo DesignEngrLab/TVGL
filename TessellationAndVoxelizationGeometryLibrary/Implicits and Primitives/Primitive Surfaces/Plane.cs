@@ -585,7 +585,7 @@ namespace TVGL
         public override Vector3 ClosestPointOnSurfaceToPoint(Vector3 point)
         {
             var d = point.Dot(Normal) - DistanceToOrigin;
-            return point + Normal * d;
+            return point - Normal * d;
         }
 
 

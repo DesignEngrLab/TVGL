@@ -132,7 +132,12 @@ namespace TVGL
             }
             set { type = value; }
         }
-
+        /// <summary>
+        /// This preserves information about which side of the stationary point were the original sample points 
+        /// that created the quadric in the geodesic slicer. If the surface cuts the model on the other side of 
+        /// the stationary point, these outlines can be immediately ruled.
+        /// </summary>
+        public Vector3 HalfPlaneDirection { get; set; } = Vector3.Zero;
         /// <summary>
         /// Gets all the coefficients as an enumerable in the order listed above.
         /// </summary>
@@ -1201,7 +1206,7 @@ namespace TVGL
                     if (MNonZeroEigValsSameSign) return QuadricType.ImaginaryParallelPlanes;
                     else return QuadricType.ParallelPlanes;
                 }
-                else if (Mrank == 1) return QuadricType.Plane;
+                else if (Mrank == 1) return QuadricType.DoublePlane;
             }
             else
             {

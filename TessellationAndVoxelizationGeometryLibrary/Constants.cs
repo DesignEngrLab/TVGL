@@ -804,7 +804,9 @@ namespace TVGL
         ParallelPlanes,
         /// <summary>Parallel planes with no real points.</summary>
         ImaginaryParallelPlanes,
-        /// <summary>A plane.</summary>
+        /// <summary>Coincident parallel planes</summary>
+        DoublePlane,
+        /// <summary>A plane.</summary> 
         Plane,
         /// <summary>A sphere.</summary>
         Sphere,
