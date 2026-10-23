@@ -10,8 +10,8 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="BugViewer" Version="0.7.0" />
-		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="5.0.0" />
-		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="5.0.0" />
+		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="5.0.1" />
+		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="5.0.1" />
 	</ItemGroup>
 	<ItemGroup>
 		<InternalsVisibleTo Include="Testing" />

@@ -61,8 +61,15 @@ namespace TVGL
             {
                 if (_asTransformFromXYPlane.IsNull())
                 {
-                    Normal.TransformToXYPlane(out var rotMatrix);
-                    _asTransformFromXYPlane = Matrix4x4.CreateTranslation(0, 0, DistanceToOrigin) * rotMatrix;
+                    var origin = ClosestPointToOrigin;
+                    var xDirection = PerpXDir;
+                    var yDirection = PerpYDir;
+                    var normal = Normal.Normalize();
+                    _asTransformFromXYPlane = new Matrix4x4(
+                        xDirection.X, xDirection.Y, xDirection.Z, 0,
+                        yDirection.X, yDirection.Y, yDirection.Z, 0,
+                        normal.X, normal.Y, normal.Z, 0,
+                        origin.X, origin.Y, origin.Z, 1);
                 }
                 return _asTransformFromXYPlane;
             }
@@ -82,8 +89,15 @@ namespace TVGL
             {
                 if (_asTransformToXYPlane.IsNull())
                 {
-                    var rotMatrix = Normal.TransformToXYPlane(out _);
-                    _asTransformToXYPlane = rotMatrix * Matrix4x4.CreateTranslation(0, 0, -DistanceToOrigin);
+                    var origin = ClosestPointToOrigin;
+                    var xDirection = PerpXDir;
+                    var yDirection = PerpYDir;
+                    var normal = Normal.Normalize();
+                    _asTransformToXYPlane = new Matrix4x4(
+                        xDirection.X, yDirection.X, normal.X, 0,
+                        xDirection.Y, yDirection.Y, normal.Y, 0,
+                        xDirection.Z, yDirection.Z, normal.Z, 0,
+                        -origin.Dot(xDirection), -origin.Dot(yDirection), -origin.Dot(normal), 1);
                 }
                 return _asTransformToXYPlane;
             }
@@ -92,6 +106,48 @@ namespace TVGL
         /// As transform to xy plane
         /// </summary>
         Matrix4x4 _asTransformToXYPlane = Matrix4x4.Null;
+
+        /// <summary>
+        /// Gets or sets the in-plane direction represented by positive X in the flattened plane.
+        /// </summary>
+        public Vector3 PerpXDir
+        {
+            get
+            {
+                if (perpXDir.IsNull())
+                {
+                    Normal.TransformToXYPlane(out var backTransform);
+                    perpXDir = backTransform.XBasisVector.Normalize();
+                }
+                return perpXDir;
+            }
+            set
+            {
+                var normal = Normal.Normalize();
+                var inPlaneDirection = value - value.Dot(normal) * normal;
+                if (inPlaneDirection.LengthSquared().IsNegligible())
+                    throw new ArgumentException("The plane perpendicular X direction must lie in the plane.",
+                        nameof(value));
+                perpXDir = inPlaneDirection.Normalize();
+                perpYDir = Vector3.Null;
+                _asTransformToXYPlane = Matrix4x4.Null;
+                _asTransformFromXYPlane = Matrix4x4.Null;
+            }
+        }
+
+        private Vector3 perpXDir = Vector3.Null;
+
+        private Vector3 PerpYDir
+        {
+            get
+            {
+                if (perpYDir.IsNull())
+                    perpYDir = Normal.Normalize().Cross(PerpXDir).Normalize();
+                return perpYDir;
+            }
+        }
+
+        private Vector3 perpYDir = Vector3.Null;
         /// <summary>
         /// Gets the closest point on the plane to the origin.
         /// </summary>
@@ -413,6 +469,9 @@ namespace TVGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override void Transform(Matrix4x4 matrix, bool transformFacesAndVertices)
         {
+            var transformedPerpXDir = perpXDir.IsNull()
+                ? Vector3.Null
+                : perpXDir.TransformNoTranslate(matrix);
             //Set these transform matrices to zero and recalculate when needed.
             _asTransformToXYPlane = Matrix4x4.Null;
             _asTransformFromXYPlane = Matrix4x4.Null;
@@ -421,6 +480,10 @@ namespace TVGL
             pointOnPlane = pointOnPlane.Transform(matrix);
             Normal = Normal.TransformNoTranslate(matrix);
             DistanceToOrigin = Normal.Dot(pointOnPlane);
+            perpXDir = Vector3.Null;
+            perpYDir = Vector3.Null;
+            if (!transformedPerpXDir.IsNull())
+                PerpXDir = transformedPerpXDir;
             // it seems like there is a quicker way to do this, but I run into problems when DistanceToOrigin = 0
         }
 
@@ -639,6 +702,7 @@ namespace TVGL
         /// </summary>
         /// <param name="points"></param>
         /// <param name="normalGuess"></param>
+        /// <param name="error"></param>
         /// <returns></returns>
         public static Plane FitToVertices(IEnumerable<Vector3> points, Vector3 normalGuess, out double error)
         {

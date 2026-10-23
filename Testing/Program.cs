@@ -40,7 +40,9 @@ namespace TVGLUnitTestsAndBenchmarking
             OutputServices.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
 
-            var files = dirInfo.GetFiles("*.st*");
+            var files = dirInfo.GetFiles("break*");
+            IO.Open(files[0].FullName, out Polygon p);
+            Presenter.ShowAndHang(p);
             foreach (var fileName in files.Skip(0))
             {
                 Console.WriteLine("Attempting to open: " + fileName.Name);
