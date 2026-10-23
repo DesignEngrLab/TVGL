@@ -492,7 +492,7 @@ public sealed class Presenter3D : IPresenter3D
                     index = vertices.Count;
                     indicesByVertexAndPrimitive.Add(key, index);
                     vertices.Add(vertex);
-                    primitiveSurfaceNormals.Add(GetPrimitiveSurfaceNormal(primitive, vertex.Coordinates));
+                    primitiveSurfaceNormals.Add(GetPrimitiveSurfaceNormal(primitive, vertex));
                 }
                 triangle[vertexIndex] = index;
             }
@@ -517,12 +517,13 @@ public sealed class Presenter3D : IPresenter3D
         };
     }
 
-    private static float[] GetPrimitiveSurfaceNormal(PrimitiveSurface? primitive, Vector3 point)
+    private static float[] GetPrimitiveSurfaceNormal(PrimitiveSurface? primitive, Vertex vertex)
     {
         if (primitive is null)
             return [0f, 0f, 0f];
-
-        var normal = primitive.GetNormalAtPoint(point);
+        if (primitive is UnknownRegion)
+            return [(float)vertex.Normal.X, (float)vertex.Normal.Y, (float)vertex.Normal.Z];
+        var normal = primitive.GetNormalAtPoint(vertex.Coordinates);
         if (normal.IsNull() || normal.LengthSquared() <= 1e-20)
             return [0f, 0f, 0f];
 

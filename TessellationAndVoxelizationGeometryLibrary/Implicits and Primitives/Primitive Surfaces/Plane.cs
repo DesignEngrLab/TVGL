@@ -702,6 +702,7 @@ namespace TVGL
         /// </summary>
         /// <param name="points"></param>
         /// <param name="normalGuess"></param>
+        /// <param name="error"></param>
         /// <returns></returns>
         public static Plane FitToVertices(IEnumerable<Vector3> points, Vector3 normalGuess, out double error)
         {
