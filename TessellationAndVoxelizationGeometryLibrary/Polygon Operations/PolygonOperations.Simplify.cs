@@ -1381,12 +1381,12 @@ namespace TVGL
         /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <param name="topOnly">if set to <c>true</c> [top only].</param>
-        private static void RecreateVertices(this Polygon polygon, bool topOnly = true)
+        public static void RecreateVertices(this Polygon polygon, bool topOnly = true)
         {
             var index = 0;
             polygon.Edges = null;
-            while (index < polygon.Vertices.Count && (polygon.Vertices[index].EndLine == null
-                || polygon.Vertices[index].StartLine == null))
+            while (index < polygon.Vertices.Count && (polygon.Vertices[index].EndLine is not null
+                && polygon.Vertices[index].StartLine is not null))
                 index++;
 
             if (index == polygon.Vertices.Count)

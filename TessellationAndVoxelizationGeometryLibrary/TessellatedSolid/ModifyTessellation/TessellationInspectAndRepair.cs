@@ -1139,6 +1139,7 @@ namespace TVGL
         /// non-smooth edges are defined as those that have c0 continuity of course
         /// (locally water-tight), but do not have C1 continuity
         /// </summary>
+        /// <param name="chordError"></param>
         /// <param name="ts">The ts.</param>
         /// <param name="primitives">The primitives.</param>
         void FindNonSmoothEdges(double chordError = double.NaN)

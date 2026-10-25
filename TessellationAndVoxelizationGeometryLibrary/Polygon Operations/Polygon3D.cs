@@ -154,10 +154,15 @@ namespace TVGL
         /// <returns>A new <see cref="Polygon3D"/> object.</returns>
         public Polygon3D Copy()
         {
-            var copiedHoles = new Vector3[Holes.Count][];
-            for (int i = 0; i < Holes.Count; i++)
-                copiedHoles[i] = Holes[i].ToArray();
-            return new Polygon3D(Vertices.ToArray(), IsClosed, copiedHoles);
+            if (Holes is null)
+                return new Polygon3D(Vertices.ToArray(), IsClosed);
+            else
+            {
+                var copiedHoles = new Vector3[Holes.Count][];
+                for (int i = 0; i < Holes.Count; i++)
+                    copiedHoles[i] = Holes[i].ToArray();
+                return new Polygon3D(Vertices.ToArray(), IsClosed, copiedHoles);
+            }
         }
 
         /// <summary>
@@ -173,7 +178,7 @@ namespace TVGL
         /// <summary>
         /// Gets or sets the index of the polygon.
         /// </summary>
-        public int Index { get;  set; }
+        public int Index { get; set; }
 
         private static List<Vector3> ConvertToVector3s(IEnumerable<double> coordinates)
         {
