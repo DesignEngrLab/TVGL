@@ -9,12 +9,13 @@
 		<ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="BugViewer" Version="0.7.0" />
+		<PackageReference Include="BugViewer" Version="0.7.5" />
 		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="5.0.1" />
 		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="5.0.1" />
 	</ItemGroup>
 	<ItemGroup>
 		<InternalsVisibleTo Include="Testing" />
+		<InternalsVisibleTo Include="WebGPUPresenter.SceneTests" />
 	</ItemGroup>
 	<!-- This project is a library hosted by a console application. The Web SDK only adds Blazor's
 	     framework script automatically for executable projects, so embed that one required asset here. -->

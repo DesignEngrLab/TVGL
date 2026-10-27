@@ -26,7 +26,7 @@ public sealed class Presenter3D : IPresenter3D
     public void ShowAndHang(Solid solid, Action<(TriangleFace face, Vector3 point)> onSelection, string heading = "", string title = "", string subtitle = "")
     {
         ArgumentNullException.ThrowIfNull(onSelection);
-        var scene = new SceneRequest
+        var scene = new PresenterRequest
         {
             RequestId = Guid.NewGuid(),
             Heading = heading,
@@ -41,7 +41,7 @@ public sealed class Presenter3D : IPresenter3D
 
     public void ShowAndHang(IEnumerable<Solid> solids, string heading = "", string title = "", string subtitle = "")
     {
-        var scene = new SceneRequest
+        var scene = new PresenterRequest
         {
             RequestId = Guid.NewGuid(),
             Heading = heading,
@@ -56,7 +56,7 @@ public sealed class Presenter3D : IPresenter3D
                 primitivesExist = false;
         }
         if (!primitivesExist)
-            scene = new SceneRequest
+            scene = new PresenterRequest
             {
                 RequestId = Guid.NewGuid(),
                 Meshes = scene.Meshes,
@@ -73,7 +73,7 @@ public sealed class Presenter3D : IPresenter3D
 
     public void ShowAndHang(IEnumerable<TriangleFace> faces, string heading = "", string title = "", string subtitle = "")
     {
-        var scene = new SceneRequest
+        var scene = new PresenterRequest
         {
             RequestId = Guid.NewGuid(),
             Heading = heading,
@@ -94,7 +94,7 @@ public sealed class Presenter3D : IPresenter3D
         bool otherwiseRandomPathColors = false,
         params Solid[] solids)
     {
-        var scene = new SceneRequest
+        var scene = new PresenterRequest
         {
             RequestId = Guid.NewGuid(),
         };
@@ -108,7 +108,7 @@ public sealed class Presenter3D : IPresenter3D
                 primitivesExist = false;
         }
         if (!primitivesExist)
-            scene = new SceneRequest
+            scene = new PresenterRequest
             {
                 Meshes = scene.Meshes,
                 Paths = scene.Paths,
@@ -166,7 +166,7 @@ public sealed class Presenter3D : IPresenter3D
         IEnumerable<Color>? colors,
         IEnumerable<TriangleFace>? faces)
     {
-        var scene = new SceneRequest
+        var scene = new PresenterRequest
         {
             RequestId = Guid.NewGuid(),
             ShowMeshBorders = false,
@@ -180,7 +180,7 @@ public sealed class Presenter3D : IPresenter3D
 
     public void ShowPointsAndHang(IEnumerable<Vector3> points, double radius = 0, Color? color = null)
     {
-        var scene = new SceneRequest
+        var scene = new PresenterRequest
         {
             RequestId = Guid.NewGuid(),
         };
@@ -193,7 +193,7 @@ public sealed class Presenter3D : IPresenter3D
         double radius = 0,
         IEnumerable<Color>? colors = null)
     {
-        var scene = new SceneRequest
+        var scene = new PresenterRequest
         {
             RequestId = Guid.NewGuid(),
         };
@@ -212,7 +212,7 @@ public sealed class Presenter3D : IPresenter3D
         IEnumerable<TessellatedSolid> a,
         IEnumerable<TessellatedSolid> b)
     {
-        var scene = new SceneRequest
+        var scene = new PresenterRequest
         {
             RequestId = Guid.NewGuid(),
         };
@@ -231,7 +231,7 @@ public sealed class Presenter3D : IPresenter3D
 
     public void ShowGaussSphereWithIntensity(IEnumerable<Vertex> vertices, IList<Color> colors, Solid solid)
     {
-        var scene = new SceneRequest
+        var scene = new PresenterRequest
         {
             RequestId = Guid.NewGuid(),
         };
@@ -272,7 +272,7 @@ public sealed class Presenter3D : IPresenter3D
         int timeToShow = -1,
         int id = -1)
     {
-        var scene = new SceneRequest
+        var scene = new PresenterRequest
         {
             RequestId = Guid.NewGuid(),
             Title = title,
@@ -298,7 +298,7 @@ public sealed class Presenter3D : IPresenter3D
         int id = -1,
         params Solid[] solids)
     {
-        var scene = new SceneRequest
+        var scene = new PresenterRequest
         {
             RequestId = Guid.NewGuid(),
             Title = title,
@@ -364,7 +364,7 @@ public sealed class Presenter3D : IPresenter3D
         IList<IEnumerable<Color>>? pathColors, SteppedPresentationOptions? options)
     {
         options?.Validate();
-        var request = new SceneRequest
+        var request = new PresenterRequest
         {
             RequestId = Guid.NewGuid(),
             AutoResetCamera = UpdateTypes.Never,
@@ -384,15 +384,15 @@ public sealed class Presenter3D : IPresenter3D
                 PathSource = new SceneStepPathSource
                 {
                     Id = $"step-path-group-{request.RequestId:N}-{groupIndex}",
-                    Paths = pathGroup,
+                    Paths = SceneConversions.Paths(pathGroup),
                     ClosePaths = AsReadOnlyList(closeValues) ?? [],
                     Thicknesses = AsReadOnlyList(thicknessValues) ?? [],
-                    Colors = AsReadOnlyList(colorValues) ?? [],
-                    DefaultColor = Color.GetRandomColors().First(),
+                    Colors = SceneConversions.Colors(AsReadOnlyList(colorValues) ?? []),
+                    DefaultColor = SceneConversions.Color(Color.GetRandomColors().First()),
                     HistoryStepLimit = options?.PathHistoryStepLimit
                 },
                 Transforms = pathTransformGroups != null && groupIndex < pathTransformGroups.Count
-                    ? AsReadOnlyList(pathTransformGroups[groupIndex])
+                    ? SceneConversions.Transforms(AsReadOnlyList(pathTransformGroups[groupIndex]))
                     : null
             };
             request.StepGroups.Add(group);
@@ -406,7 +406,7 @@ public sealed class Presenter3D : IPresenter3D
             {
                 Meshes = faceGroup.Select(CreateStepMesh).ToList(),
                 Transforms = fGTransforms != null && groupIndex < fGTransforms.Count
-                    ? AsReadOnlyList(fGTransforms[groupIndex])
+                    ? SceneConversions.Transforms(AsReadOnlyList(fGTransforms[groupIndex]))
                     : null
             };
             request.StepGroups.Add(group);
@@ -512,9 +512,8 @@ public sealed class Presenter3D : IPresenter3D
                 ? [defaultColor]
                 : faceList.Select(face => face.Color is null ? defaultColor
                 : new ColorRgba(face.Color.R, face.Color.G, face.Color.B, face.Color.A)).ToList(),
-            HasUniformColor = hasUniformColor,
-            SourceFaces = faceList
-        };
+            HasUniformColor = hasUniformColor
+        }.WithSourceFaces(faceList);
     }
 
     private static float[] GetPrimitiveSurfaceNormal(PrimitiveSurface? primitive, Vertex vertex)

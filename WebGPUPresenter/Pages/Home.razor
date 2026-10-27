@@ -10,7 +10,7 @@
     {
         @if (scene.Kind == PresentationKind.ThreeDimensional)
         {
-            <SceneViewer @key="scene.Id" ViewerId="scene.Id" IsActive="scene.Id == activeViewerId" Scenes="scene.Scenes" OnClose="CloseViewerAsync" OnReady="ViewerReadyAsync" OnTriangleSelected="TriangleSelectedAsync" />
+            <WebGPUPresenter.Components.SceneViewer @key="scene.Id" ViewerId="scene.Id" IsActive="scene.Id == activeViewerId" Scenes="scene.Scenes" OnClose="CloseViewerAsync" OnReady="ViewerReadyAsync" OnTriangleSelected="TriangleSelectedAsync" />
         }
         else
         {
@@ -49,7 +49,7 @@
         }
     }
 
-    private async Task ReceiveSceneAsync(SceneRequest request)
+    private async Task ReceiveSceneAsync(PresenterRequest request)
     {
         await InvokeAsync(() =>
         {

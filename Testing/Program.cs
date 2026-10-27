@@ -1,3 +1,4 @@
+using BugViewer;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -178,10 +179,10 @@ namespace TVGLUnitTestsAndBenchmarking
             var webSource = new SceneStepPathSource
             {
                 Id = "scale-test",
-                Paths = millionPaths,
+                Paths = SceneConversions.Paths(millionPaths),
                 HistoryStepLimit = 500
             };
-            var webGroup = new SceneStepGroup { PathSource = webSource, Transforms = millionTransforms };
+            var webGroup = new SceneStepGroup { PathSource = webSource, Transforms = SceneConversions.Transforms(millionTransforms) };
             var webIndices = webGroup.ResolvePathIndices(999_999).ToArray();
             Assert(webIndices.Length == 500 && webIndices[0] == 999_500 && webIndices[^1] == 999_999,
                 "WebGPU history resolution was not bounded to the latest 500 timesteps.");
@@ -194,11 +195,11 @@ namespace TVGLUnitTestsAndBenchmarking
                 Id = "batch-test",
                 Paths =
                 [
-                    new[] { new Vector3(0, 0, 0), new Vector3(1, 0, 0) },
-                    new[] { new Vector3(10, 0, 0), new Vector3(11, 0, 0) }
+                    new[] { new ScenePoint(0, 0, 0), new ScenePoint(1, 0, 0) },
+                    new[] { new ScenePoint(10, 0, 0), new ScenePoint(11, 0, 0) }
                 ],
                 Thicknesses = [2.0, 3.0],
-                Colors = [new Color(KnownColors.Red), new Color(KnownColors.Blue)],
+                Colors = [new ColorRgba(255, 0, 0), new ColorRgba(0, 0, 255)],
                 HistoryStepLimit = 2
             };
             var batchGroup = new SceneStepGroup
@@ -206,8 +207,8 @@ namespace TVGLUnitTestsAndBenchmarking
                 PathSource = batchSource,
                 Transforms =
                 [
-                    Matrix4x4.CreateTranslation(5, 0, 0),
-                    Matrix4x4.CreateTranslation(5, 0, 0)
+                    SceneConversions.Transform(Matrix4x4.CreateTranslation(5, 0, 0)),
+                    SceneConversions.Transform(Matrix4x4.CreateTranslation(5, 0, 0))
                 ]
             };
             var batch = StepPathBatchBuilder.Build(batchGroup, batchSource, 1);
@@ -237,10 +238,10 @@ namespace TVGLUnitTestsAndBenchmarking
                 PathSource = new SceneStepPathSource
                 {
                     Id = "barrier-test",
-                    Paths = barrierPaths,
+                    Paths = SceneConversions.Paths(barrierPaths),
                     HistoryStepLimit = 5
                 },
-                Transforms = barrierTransforms
+                Transforms = SceneConversions.Transforms(barrierTransforms)
             };
             AssertSequence(webBarrierGroup.ResolvePathIndices(7), [5, 6, 7],
                 "WebGPU resolution crossed a null-transform barrier.");
