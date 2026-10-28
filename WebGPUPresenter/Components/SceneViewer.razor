@@ -1,6 +1,7 @@
 @namespace WebGPUPresenter.Components
 
 <BugViewer.SceneViewer @ref="presentation" ViewerId="ViewerId" IsActive="IsActive" Scenes="Scenes"
+                EnableOpenScene="false" EnableFileShortcuts="false"
                 OnClose="OnClose" OnReady="OnReady" OnTriangleSelected="TriangleSelectedAsync"
                 HoverSelectionKeys="inspectionKeys" OnHoverSelectionKeyChanged="InspectionKeyChangedAsync"
                 OnBeforeSceneUpdate="ClearInspectionVisualsAsync" />

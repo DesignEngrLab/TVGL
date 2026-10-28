@@ -14,6 +14,7 @@ public partial class SceneViewer
     [Parameter] public EventCallback OnReady { get; set; }
     [Parameter] public EventCallback<SceneTriangleSelection> OnTriangleSelected { get; set; }
     private global::BugViewer.SceneViewer? presentation;
+    public Task ShowSaveAsAsync() => presentation?.ShowSaveAsAsync() ?? Task.CompletedTask;
     private global::BugViewer.BugViewer? viewer => presentation?.Viewer;
     private string? activeInspectionKey;
     private string? coloredMeshId;

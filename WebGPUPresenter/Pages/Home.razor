@@ -1,6 +1,7 @@
 @page "/"
 @implements IAsyncDisposable
 @using TVGL
+@using Microsoft.FluentUI.AspNetCore.Components
 @inject LocalPresenterHost Host
 @inject IJSRuntime JS
 
@@ -8,14 +9,7 @@
 <main class="presenter-page">
     @foreach (var scene in viewerStack)
     {
-        @if (scene.Kind == PresentationKind.ThreeDimensional)
-        {
-            <WebGPUPresenter.Components.SceneViewer @key="scene.Id" ViewerId="scene.Id" IsActive="scene.Id == activeViewerId" Scenes="scene.Scenes" OnClose="CloseViewerAsync" OnReady="ViewerReadyAsync" OnTriangleSelected="TriangleSelectedAsync" />
-        }
-        else
-        {
-            <PlotViewer @key="scene.Id" ViewerId="scene.Id" IsActive="scene.Id == activeViewerId" Scenes="scene.Scenes" OnClose="CloseViewerAsync" OnReady="ViewerReadyAsync" />
-        }
+        <WebGPUPresenter.Components.SceneViewer @key="scene.Id" @ref="scene.Viewer" ViewerId="scene.Id" IsActive="scene.Id == activeViewerId" Scenes="scene.Scenes" OnClose="CloseViewerAsync" OnReady="ViewerReadyAsync" OnTriangleSelected="TriangleSelectedAsync" />
     }
 </main>
 <footer class="presenter-controls">
@@ -23,6 +17,10 @@
     <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Save)" @onchange="@(() => nextScenePolicy = ScenePolicy.Save)" /> Save Scene (N)</label>
     <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Hold)" @onchange="@(() => nextScenePolicy = ScenePolicy.Hold)" /> Hold (H)</label>
     <button @onclick="ContinueAsync">Continue</button>
+    <button type="button" data-presenter-save @onclick="SaveActiveSceneAsync" disabled="@(!CanSaveActiveScene)"
+            title="Save scene as (Ctrl+Alt+S)" aria-label="Save scene as" aria-keyshortcuts="Control+Alt+S">
+        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Save())" />
+    </button>
 </footer>
 
 @code {
@@ -34,6 +32,9 @@
     private bool scrollToNewestViewer;
     private PresentationPageInterop? pageInterop;
     private DotNetObjectReference<Home>? keyboardReference;
+    private ViewerScene? ActiveViewer => viewerStack.LastOrDefault(v => v.Id == activeViewerId);
+    private bool CanSaveActiveScene => ActiveViewer is { Viewer: not null, Scenes.Count: > 0 };
+    private Task SaveActiveSceneAsync() => ActiveViewer?.Viewer?.ShowSaveAsAsync() ?? Task.CompletedTask;
 
     protected override void OnInitialized()
     {
@@ -155,6 +156,7 @@
         public PresentationKind Kind { get; } = kind;
         public int PersistentId { get; } = persistentId;
         public List<SceneRequest> Scenes { get; } = [];
+        public WebGPUPresenter.Components.SceneViewer? Viewer { get; set; }
     }
     private enum ScenePolicy { Clear, Save, Hold }
 }
