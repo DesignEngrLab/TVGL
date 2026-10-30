@@ -1386,7 +1386,7 @@ namespace TVGL
             var index = 0;
             polygon.Edges = null;
             while (index < polygon.Vertices.Count && (polygon.Vertices[index].EndLine == null
-                || polygon.Vertices[index].StartLine == null))
+                && polygon.Vertices[index].StartLine == null))
                 index++;
 
             if (index == polygon.Vertices.Count)

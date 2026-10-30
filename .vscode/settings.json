@@ -1,3 +1,4 @@
 {
-    "dotnet.preferCSharpExtension": true
+    "dotnet.preferCSharpExtension": true,
+    "cmake.sourceDirectory": "C:/Users/campmatt/source/repos/TVGL/STEPImportExport/Native"
 }

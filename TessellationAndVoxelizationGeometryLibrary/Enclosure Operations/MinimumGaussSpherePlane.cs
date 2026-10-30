@@ -7,14 +7,17 @@ namespace TVGL
     public static partial class MinimumEnclosure
     {
         /// <summary>
-        /// Gets the minimum gauss sphere plane. That is, the plane farthest from the origin that
-        /// encompasses all the provided points. 
-        /// This is similar to the minimum bounding circle and sphere algorithms
-        /// minimizes the maximum distance to the points.
+        /// Computes the minimum bounding spherical cap (minimum enclosing circle on the Gauss sphere)
+        /// containing all the provided unit vectors, and returns its cutting plane.
         /// </summary>
-        /// <param name="pointsInput">The input points should all be unit vectors.</param>
-        /// <param name="tolerance">The tolerance.</param>
-        /// <returns>A Plane.</returns>
+        /// <remarks>
+        /// Points on the unit sphere are encompassed if <c>point.Dot(plane.Normal) &gt;= plane.DistanceToOrigin</c>.
+        /// Because minimizing the cap's angular radius θ maximizes cos(θ), the returned plane is the one
+        /// <b>farthest from the origin</b> (maximum DistanceToOrigin) whose positive half-space encompasses all points.
+        /// </remarks>
+        /// <param name="pointsInput">The input points, which should all be unit vectors on the Gauss sphere.</param>
+        /// <param name="tolerance">The geometric tolerance.</param>
+        /// <returns>A Plane cutting the Gauss sphere at DistanceToOrigin = cos(θ) with Normal pointing to the cap center.</returns>
         public static Plane MinimumGaussSpherePlane(this IEnumerable<Vector3> pointsInput, double tolerance = Constants.BaseTolerance)
         {
             var points = pointsInput as Vector3[] ?? pointsInput.ToArray();
@@ -22,17 +25,19 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets the minimums the gauss sphere plane. That is, the plane closest to the origin that
-        /// encompasses all the provided points. 
-        /// This is similar to the minimum bounding circle and sphere algorithms
-        /// minimizes the maximum distance to the points.
+        /// Computes the minimum bounding spherical cap (minimum enclosing circle on the Gauss sphere)
+        /// containing all the provided unit vectors, oriented along a preferred direction, and returns its cutting plane.
         /// </summary>
-        /// <param name="pointsInput">The input points should all be unit vectors.</param>
-        /// <param name="orientingVector">The orienting vector is used to flip the plane so that it is found 
-        /// in a particular direction. If the dot-product between the orienting vector and the plane normal is
-        /// negative then the plane will be flipped.</param>
-        /// <param name="tolerance">The tolerance.</param>
-        /// <returns>A Plane.</returns>
+        /// <remarks>
+        /// Points on the unit sphere are encompassed if <c>point.Dot(plane.Normal) &gt;= plane.DistanceToOrigin</c>.
+        /// Because minimizing the cap's angular radius θ maximizes cos(θ), the returned plane is the one
+        /// <b>farthest from the origin</b> (maximum DistanceToOrigin) whose positive half-space encompasses all points.
+        /// </remarks>
+        /// <param name="pointsInput">The input points, which should all be unit vectors on the Gauss sphere.</param>
+        /// <param name="orientingVector">The orienting vector used to ensure the plane normal points in the desired direction.
+        /// If the dot product between the orienting vector and plane normal is negative, the plane normal and distance are flipped.</param>
+        /// <param name="tolerance">The geometric tolerance.</param>
+        /// <returns>A Plane cutting the Gauss sphere at DistanceToOrigin = cos(θ) with Normal pointing to the cap center.</returns>
         public static Plane MinimumGaussSpherePlane(this IEnumerable<Vector3> pointsInput, Vector3 orientingVector,
             double tolerance = Constants.BaseTolerance)
         {

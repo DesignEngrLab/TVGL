@@ -70,7 +70,8 @@ namespace TVGL
                 for (int i = startIndex; i < numPoints; i++)
                 {
                     var dist = (points[i] - circle.Center).LengthSquared();
-                    if (dist > maxDistSqared)
+                    if (dist.IsGreaterThanNonNegligible(maxDistSqared,
+                        Math.Max(dist, maxDistSqared) * Constants.DefaultEqualityTolerance))
                     {
                         //Set max distance ONLY AFTER handling the stall counter logic.
                         maxDistSqared = dist;
@@ -101,15 +102,28 @@ namespace TVGL
             } while (newPointFoundOutsideCircle && totalIterationCounter < maxIterations);
             if (totalIterationCounter == maxIterations)
             {
-                var filePathOut = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "cvxpoints.csv");
-                OutputServices.Logger.LogError("MinimumCircle function reach max iteration counter: " + maxIterations);
-                OutputServices.Logger.LogInformation("points saved to: " + filePathOut);
-                File.WriteAllLines(filePathOut, pointsInput.Select(p => p.X + "," + p.Y));
-                //Presenter.ShowAndHang(points, plot2DType: Plot2DType.Scatter);
+                OutputServices.Logger.LogError("MinimumCircle reached its iteration limit {IterationLimit}.", maxIterations);
             }
 
-            return circle;
+            // Boundary comparisons allow floating-point roundoff; the returned enclosure must still contain every input.
+            var enclosingRadiusSquared = points.Max(point => (point - circle.Center).LengthSquared());
+            return new Circle(circle.Center, Math.Max(circle.RadiusSquared, enclosingRadiusSquared));
         }
+
+        /// <summary>
+        /// Determines whether a point is within a circle, allowing a scale-relative tolerance for
+        /// floating-point roundoff at the boundary.
+        /// </summary>
+        /// <param name="circle">The circle to test.</param>
+        /// <param name="point">The point to test.</param>
+        /// <returns><see langword="true"/> when the point is inside or negligibly outside the circle.</returns>
+        private static bool ContainsCirclePoint(Circle circle, Vector2 point)
+        {
+            var distanceSquared = (point - circle.Center).LengthSquared();
+            return distanceSquared <= circle.RadiusSquared || distanceSquared.IsPracticallySame(circle.RadiusSquared,
+                Math.Max(distanceSquared, circle.RadiusSquared) * Constants.DefaultEqualityTolerance);
+        }
+
         private static Circle FirstCircle(Vector2[] points)
         {
             // during the main loop, the most outside point will be moved to the front
@@ -120,10 +134,10 @@ namespace TVGL
             // permutations in this function. This will ensure that FindCircle runs faster (without
             // extra conditions and ensures that it won't miss a case
             var circle = Circle.CreateFrom2Points(points[0], points[1]);
-            if ((points[2] - circle.Center).LengthSquared() <= circle.RadiusSquared)
+            if (ContainsCirclePoint(circle, points[2]))
                 return circle;
             circle = Circle.CreateFrom2Points(points[0], points[2]);
-            if ((points[1] - circle.Center).LengthSquared() <= circle.RadiusSquared)
+            if (ContainsCirclePoint(circle, points[1]))
             {
                 // since 0 and 2 are furthest apart, we need to swap 1 and 2
                 // so that the two points in the circle are at the beinning of the list
@@ -131,7 +145,7 @@ namespace TVGL
                 return circle;
             }
             circle = Circle.CreateFrom2Points(points[1], points[2]);
-            if ((points[0] - circle.Center).LengthSquared() <= circle.RadiusSquared)
+            if (ContainsCirclePoint(circle, points[0]))
             {
                 // since 1 and 2 are furthest apart, we need to swap 0 and 2
                 // so that the two points in the circle are at the beinning of the list
@@ -157,22 +171,22 @@ namespace TVGL
 
             // 1. make the 0-1 circle and check with 2 & 3
             var circle = Circle.CreateFrom2Points(points[0], points[1]);
-            if ((points[2] - circle.Center).LengthSquared() <= circle.RadiusSquared
-                && (points[3] - circle.Center).LengthSquared() <= circle.RadiusSquared)
+            if (ContainsCirclePoint(circle, points[2])
+                && ContainsCirclePoint(circle, points[3]))
                 return circle;
 
             // 2. make the 0-2 circle and check with 1 & 3
             circle = Circle.CreateFrom2Points(points[0], points[2]);
-            if ((points[1] - circle.Center).LengthSquared() <= circle.RadiusSquared
-                && (points[3] - circle.Center).LengthSquared() <= circle.RadiusSquared)
+            if (ContainsCirclePoint(circle, points[1])
+                && ContainsCirclePoint(circle, points[3]))
             {
                 Global.SwapItemsInList(1, 2, points);
                 return circle;
             }
             // 3. make the 0-3 circle and check with 1 & 2
             circle = Circle.CreateFrom2Points(points[0], points[3]);
-            if ((points[1] - circle.Center).LengthSquared() <= circle.RadiusSquared
-                && (points[2] - circle.Center).LengthSquared() <= circle.RadiusSquared)
+            if (ContainsCirclePoint(circle, points[1])
+                && ContainsCirclePoint(circle, points[2]))
             {
                 Global.SwapItemsInList(1, 3, points);
                 return circle;
@@ -183,7 +197,7 @@ namespace TVGL
             // circle 0-1-2
             var minRadiusSqd = double.PositiveInfinity;
             if (Circle.CreateFrom3Points(points[0], points[1], points[2], out tempCircle)
-                && (points[3] - tempCircle.Center).LengthSquared() <= tempCircle.RadiusSquared)
+                && ContainsCirclePoint(tempCircle, points[3]))
             {
                 circle = tempCircle;
                 minRadiusSqd = circle.RadiusSquared;
@@ -191,7 +205,7 @@ namespace TVGL
             // circle 0-1-3
             var swap3And2 = false;
             if (Circle.CreateFrom3Points(points[0], points[1], points[3], out tempCircle)
-                && (points[2] - tempCircle.Center).LengthSquared() <= tempCircle.RadiusSquared
+                && ContainsCirclePoint(tempCircle, points[2])
                 && tempCircle.RadiusSquared < minRadiusSqd)
             {
                 swap3And2 = true;
@@ -201,7 +215,7 @@ namespace TVGL
             // circle 0-2-3
             var swap3And1 = false;
             if (Circle.CreateFrom3Points(points[0], points[2], points[3], out tempCircle)
-                && (points[1] - tempCircle.Center).LengthSquared() <= tempCircle.RadiusSquared
+                && ContainsCirclePoint(tempCircle, points[1])
                 && tempCircle.RadiusSquared < minRadiusSqd)
             {
                 swap3And1 = true;

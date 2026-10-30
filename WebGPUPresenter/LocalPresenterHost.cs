@@ -1,3 +1,4 @@
+using BugViewer;
 using Microsoft.FluentUI.AspNetCore.Components;
 using System.Diagnostics;
 using System.Net;
@@ -11,9 +12,9 @@ public sealed class LocalPresenterHost
     private readonly object gate = new();
     private TaskCompletionSource<bool> ready = NewTcs();
     private TaskCompletionSource<bool>? pending;
-    private SceneRequest? active;
+    private PresenterRequest? active;
     public string Url { get; }
-    internal event Func<SceneRequest, Task>? SceneRequested;
+    internal event Func<PresenterRequest, Task>? SceneRequested;
     public LocalPresenterHost()
     {
         var port = FindPort(); Url = $"http://127.0.0.1:{port}";
@@ -42,11 +43,11 @@ public sealed class LocalPresenterHost
         app.Start(); LaunchBrowser();
     }
     public void WaitReady() => ready.Task.GetAwaiter().GetResult();
-    public void Show(SceneRequest scene)
+    public void Show(PresenterRequest scene)
     {
         WaitReady();
         TaskCompletionSource<bool> completion;
-        Func<SceneRequest, Task> deliver;
+        Func<PresenterRequest, Task> deliver;
         lock (gate)
         {
             active = scene;
@@ -56,7 +57,7 @@ public sealed class LocalPresenterHost
         deliver(scene).GetAwaiter().GetResult();
         completion.Task.GetAwaiter().GetResult();
     }
-    public void Publish(SceneRequest scene)
+    public void Publish(PresenterRequest scene)
     {
         WaitReady();
         var deliver = SceneRequested ?? throw new InvalidOperationException("The browser presenter is not connected.");
@@ -64,7 +65,7 @@ public sealed class LocalPresenterHost
     }
     internal Task Ready()
     {
-        SceneRequest? replay;
+        PresenterRequest? replay;
         lock (gate) { ready.TrySetResult(true); replay = active; }
         return replay is null || SceneRequested is null ? Task.CompletedTask : SceneRequested(replay);
     }
@@ -79,7 +80,7 @@ public sealed class LocalPresenterHost
                 return;
             callback = active.OnSelection;
             face = active.Meshes.FirstOrDefault(m => m.Id == selection.MeshId)?
-                .SourceFaces.ElementAtOrDefault(selection.TriangleIndex);
+                .SourceFaces().ElementAtOrDefault(selection.TriangleIndex);
         }
         if (callback is not null && face is not null)
             callback((face, new Vector3(selection.Point.X, selection.Point.Y, selection.Point.Z)));

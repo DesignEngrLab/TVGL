@@ -248,8 +248,15 @@ namespace TVGL
                 */
             }
             assembly.Solids = solids.Values.ToArray();
-            foreach (var solid in assembly.Solids)
-                assembly.RootAssembly.Add(solid, Matrix4x4.Identity);
+            assembly.RootAssembly ??= new SubAssembly(assembly);
+            // Only a file without an assembly tree needs its solids placed at the root. When the tree was
+            // saved, it already references every instance, and adding them again would duplicate each
+            // distinct solid at the identity transform.
+            assembly.RootAssembly.Solids ??= [];
+            assembly.RootAssembly.SubAssemblies ??= [];
+            if (assembly.RootAssembly.Solids.Count == 0 && assembly.RootAssembly.SubAssemblies.Count == 0)
+                foreach (var solid in assembly.Solids)
+                    assembly.RootAssembly.Add(solid, Matrix4x4.Identity);
             assembly.RootAssembly.SetGlobalAssembly(assembly);
         }
 

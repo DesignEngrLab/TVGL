@@ -22,7 +22,7 @@ public sealed class Presenter2D : IPresenter2D
     public void ShowAndHang(IEnumerable<IEnumerable<Vector2>> pointsList, string title = "", Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker = MarkerType.Circle)
         => Block(Plot(pointsList, title, plot2DType, Repeat(closeShape), Repeat(marker)));
     public void ShowAndHang(IEnumerable<IEnumerable<IEnumerable<Vector2>>> pointsLists, string title = "", Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker = MarkerType.Circle)
-        => Block(new SceneRequest { RequestId = Guid.NewGuid(), Kind = PresentationKind.TwoDimensional, Title = title, Steps = pointsLists.Select(p => Plot(p, title, plot2DType, Repeat(closeShape), Repeat(marker))).ToList() });
+        => Block(new PresenterRequest { RequestId = Guid.NewGuid(), Kind = PresentationKind.TwoDimensional, Title = title, Steps = pointsLists.Select(p => (SceneRequest)Plot(p, title, plot2DType, Repeat(closeShape), Repeat(marker))).ToList() });
     public void ShowAndHang(IEnumerable<Polygon> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Area, MarkerType marker = MarkerType.None)
         => Block(Plot(polygons.SelectMany(p => p.AllPolygons).Select(p => p.Path), title, plot2DType, polygons.SelectMany(p => p.AllPolygons).Select(p => p.IsClosed), Repeat(marker)));
     public void ShowAndHang(Polygon polygon, string title = "", Plot2DType plot2DType = Plot2DType.Area, MarkerType marker = MarkerType.None) => ShowAndHang([polygon], title, plot2DType, marker);
@@ -45,10 +45,10 @@ public sealed class Presenter2D : IPresenter2D
     public void ShowStepsAndHang(ICollection<double[,]> data, IEnumerable<IEnumerable<Vector2>> points, bool connectPointsInLine, string title = "") => Block(Steps(data, points.Select(p => (IEnumerable<IEnumerable<Vector2>>)[p]), Repeat(connectPointsInLine), title));
     public void ShowStepsAndHang(ICollection<double[,]> data, IEnumerable<IEnumerable<IEnumerable<Vector2>>> points, IEnumerable<bool> connectPointsInLine, string title = "") => Block(Steps(data, points, connectPointsInLine, title));
 
-    private void Block(SceneRequest request) => host.Show(request);
-    private void Publish(SceneRequest request) => host.Publish(request);
-    private static SceneRequest Heatmap(double[,] data, bool normalize, string title) => new() { RequestId = Guid.NewGuid(), Kind = PresentationKind.TwoDimensional, Title = title, Plot = new PlotRequest { Heatmap = ToJagged(Normalize(data, normalize)), NormalizeHeatmap = normalize } };
-    private static SceneRequest Plot(IEnumerable<IEnumerable<Vector2>> paths, string title, Plot2DType type,
+    private void Block(PresenterRequest request) => host.Show(request);
+    private void Publish(PresenterRequest request) => host.Publish(request);
+    private static PresenterRequest Heatmap(double[,] data, bool normalize, string title) => new() { RequestId = Guid.NewGuid(), Kind = PresentationKind.TwoDimensional, Title = title, Plot = new PlotRequest { Heatmap = ToJagged(Normalize(data, normalize)), NormalizeHeatmap = normalize } };
+    private static PresenterRequest Plot(IEnumerable<IEnumerable<Vector2>> paths, string title, Plot2DType type,
         IEnumerable<bool> closed, IEnumerable<MarkerType> markers, bool blocking = true, int id = -1,
         HoldType hold = HoldType.Immediate, int time = -1)
     {
@@ -66,14 +66,14 @@ public sealed class Presenter2D : IPresenter2D
                 Name = $"series {i + 1}",
                 X = p.Select(v => v.X).ToList(),
                 Y = p.Select(v => v.Y).ToList(),
-                Type = !cs ? Plot2DType.Line : type,
+                Type = (ScenePlotType)(!cs ? Plot2DType.Line : type),
                 Closed = cs,
-                Marker = ms,
+                Marker = (SceneMarker)ms,
                 Color = ColorAt(i++)
             };
             return t;
         }).ToList();
-        return new SceneRequest
+        return new PresenterRequest
         {
             RequestId = Guid.NewGuid(),
             Kind = PresentationKind.TwoDimensional,
@@ -85,13 +85,13 @@ public sealed class Presenter2D : IPresenter2D
             Plot = new PlotRequest { Traces = traces }
         };
     }
-    private static SceneRequest Steps(ICollection<double[,]> data, IEnumerable<IEnumerable<IEnumerable<Vector2>>>? overlays, IEnumerable<bool>? closed, string title)
+    private static PresenterRequest Steps(ICollection<double[,]> data, IEnumerable<IEnumerable<IEnumerable<Vector2>>>? overlays, IEnumerable<bool>? closed, string title)
     {
         var dataList = data.ToList();
         var overlayList = overlays?.ToList();
         var closedPaths = closed ?? Repeat(false);
         var stepCount = Math.Max(dataList.Count, overlayList?.Count ?? 0);
-        return new SceneRequest
+        return new PresenterRequest
         {
             RequestId = Guid.NewGuid(),
             Kind = PresentationKind.TwoDimensional,

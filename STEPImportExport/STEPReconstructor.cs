@@ -102,7 +102,12 @@ namespace TVGL.STEPImportExport
                 var faceSlice = new List<TriangleFace>(end - start);
                 for (int t = start; t < end; t++)
                 {
-                    faceSlice.Add(solid.Faces[t]);
+                    var face = solid.Faces[t];
+                    // Integrity repair can invalidate negligible triangles
+                    // created by OCCT tessellation. Do not pass those dead
+                    // faces into analytic primitive constructors.
+                    if (face?.A != null && face.B != null && face.C != null)
+                        faceSlice.Add(face);
                 }
 
                 if (faceSlice.Count == 0)

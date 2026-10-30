@@ -829,7 +829,7 @@ namespace StarMathLib
             return null;
         }
 
-        internal static ComplexNumber[] GetEigenValuesAndVectors2(double x11, double x12,
+        public static ComplexNumber[] GetEigenValuesAndVectors2(double x11, double x12,
             double x21, double x22, out ComplexNumber[][] eigenVectors)
         {
             var (lambda1, lambda2) = GetEigenValues2(x11, x12, x21, x22);
@@ -857,7 +857,7 @@ namespace StarMathLib
         {
             var y11 = x11 - lambda;
             var y22 = x22 - lambda;
-            if (y11.LengthSquared() > y22.LengthSquared())
+            if (y11.LengthSquared() < y22.LengthSquared())
             {
                 var f = -x21 / y22;
                 var normFactor = 1.0 / Math.Sqrt(1 + f.Real * f.Real + f.Imaginary * f.Imaginary);
