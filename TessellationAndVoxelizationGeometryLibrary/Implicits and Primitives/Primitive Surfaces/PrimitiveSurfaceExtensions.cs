@@ -123,6 +123,60 @@ namespace TVGL
             // 1.67 is 5/3, which is 5/6 the way around. so the border would be at least a hexagon.
         }
 
+        /// <summary>
+        /// A shortcut to LineIntersection, which is implemented in every PrimitiveSurface.
+        /// Often one only wants the closest, so this should simplify code by just calling this instead.
+        /// It returns the intersection closest to the anchor with either a positive or negative t-value (i.e.
+        /// the intersection point may be in the opposite direction of the provided direction).
+        /// </summary>
+        /// <param name="surface"></param>
+        /// <param name="anchor"></param>
+        /// <param name="direction"></param>
+        /// <param name="lineT"></param>
+        /// <returns></returns>
+        public static Vector3 LineIntersectionClosest(this PrimitiveSurface surface, Vector3 anchor, Vector3 direction,
+            out double lineT)
+        {
+            lineT = double.NaN;
+            var closestAbsT = double.MaxValue;
+            var closestPoint = Vector3.Null;
+            foreach (var intData in surface.LineIntersection(anchor, direction))
+            {
+                var thisAbsT = Math.Abs(intData.lineT);
+                if (thisAbsT >= closestAbsT) continue;
+                closestAbsT = thisAbsT;
+                closestPoint = intData.intersection;
+                lineT = intData.lineT;
+            }
+
+            return closestPoint;
+        }
+
+        /// <summary>
+        /// Returns the intersection closest to the anchor that has a positive t-value (i.e.
+        /// is in the provided direction (not opposite or behind the anchor).
+        /// </summary>
+        /// <param name="surface"></param>
+        /// <param name="anchor"></param>
+        /// <param name="direction"></param>
+        /// <param name="lineT"></param>
+        /// <returns></returns>
+        public static Vector3 LineIntersectionClosestPositive(this PrimitiveSurface surface, Vector3 anchor, Vector3 direction,
+            out double lineT)
+        {
+            lineT = double.NaN;
+            var closestT = double.MaxValue;
+            var closestPoint = Vector3.Null;
+            foreach (var intData in surface.LineIntersection(anchor, direction))
+            {
+                if (intData.lineT <= 0 || intData.lineT >= closestT) continue;
+                closestT = intData.lineT;
+                closestPoint = intData.intersection;
+                lineT = intData.lineT;
+            }
+
+            return closestPoint;
+        }
 
 
         /// <summary>

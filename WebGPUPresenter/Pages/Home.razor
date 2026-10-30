@@ -17,10 +17,10 @@
     <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Save)" @onchange="@(() => nextScenePolicy = ScenePolicy.Save)" /> Save Scene (N)</label>
     <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Hold)" @onchange="@(() => nextScenePolicy = ScenePolicy.Hold)" /> Hold (H)</label>
     <button @onclick="ContinueAsync">Continue</button>
-    <button type="button" data-presenter-save @onclick="SaveActiveSceneAsync" disabled="@(!CanSaveActiveScene)"
+@*     <button type="button" data-presenter-save @onclick="SaveActiveSceneAsync" disabled="@(!CanSaveActiveScene)"
             title="Save scene as (Ctrl+Alt+S)" aria-label="Save scene as" aria-keyshortcuts="Control+Alt+S">
         <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Save())" />
-    </button>
+    </button> *@
 </footer>
 
 @code {

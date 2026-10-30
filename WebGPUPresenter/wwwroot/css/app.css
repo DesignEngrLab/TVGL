@@ -2,7 +2,8 @@ html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
-body { margin: 0; background: #f4f4f8; }
+html { height: auto; overflow-y: scroll; }
+body { margin: 0; background: #f4f4f8; height: auto; min-height: 100dvh; overflow-y: visible; }
 .presenter-page { padding: 1rem 1rem 5rem; }
 .scene-viewer { min-height: calc(100dvh - 6rem); box-sizing: border-box; display: flex; flex-direction: column; margin: 0 0 1rem; padding: 1rem; background: white; border: 1px solid #d5d5dd; border-radius: .4rem; }
 .scene-viewer-header { display: flex; justify-content: space-between; gap: 1rem; align-items: start; }
