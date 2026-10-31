@@ -188,18 +188,28 @@ namespace TVGL
                 //Write each solid as it's own object on this level rather than in an array. This will allow us more control about the solid, and
                 //will make it easier to read in, since there is one fewer global levels in the JSON structure. Pointers from the assembly refer 
                 //to the solid index and/or the order of the solids.
-                var i = 0;
-
-                foreach (var solid in Solids.Where(p => p is TessellatedSolid))
+                for (var i = 0; i < Solids.Length; i++)
                 {
-                    Log.Trace("Writing TessellatedSolid {0}", i);
-                    writer.WritePropertyName("TessellatedSolid" + i);
-                    var ts = (TessellatedSolid)solid;
-                    writer.WriteStartObject();
+                    var solid = Solids[i];
+                    switch (solid)
                     {
-                        ts.StreamWrite(writer, i++);
+                        case TessellatedSolid ts:
+                            Log.Trace("Writing TessellatedSolid {0}", i);
+                            writer.WritePropertyName("TessellatedSolid" + i);
+                            writer.WriteStartObject();
+                            ts.StreamWrite(writer, i);
+                            writer.WriteEndObject();
+                            break;
+                        case Wireframe wireframe:
+                            Log.Trace("Writing Wireframe {0}", i);
+                            writer.WritePropertyName("Wireframe" + i);
+                            JsonSerializer.CreateDefault().Serialize(writer, wireframe);
+                            break;
+                        default:
+                            Log.Warning("TVGL serialization skipped unsupported solid type {0}.",
+                                solid.GetType().FullName);
+                            break;
                     }
-                    writer.WriteEndObject();
                 }
             }
             writer.WriteEndObject();
@@ -212,7 +222,7 @@ namespace TVGL
         /// <param name="assembly">The assembly.</param>
         internal static void StreamRead(JsonTextReader reader, out SolidAssembly assembly, TessellatedSolidBuildOptions tsBuildOptions)
         {
-            var solids = new Dictionary<int, TessellatedSolid>();
+            var solids = new Dictionary<int, Solid>();
             assembly = new SolidAssembly();
             //useOnSerialization = false;//Don't serialize the TessellatedSolids directly. We are doing to do this with a stream.
             var jsonSerializer = new JsonSerializer();
@@ -227,6 +237,19 @@ namespace TVGL
                 {
                     var solid = TessellatedSolid.StreamRead(reader, out var index, tsBuildOptions);
                     solids.Add(index, solid);
+                }
+                else if (reader.TokenType == JsonToken.PropertyName && reader.Value.ToString().StartsWith("Wireframe"))
+                {
+                    var propertyName = reader.Value.ToString();
+                    var index = int.Parse(propertyName.Substring("Wireframe".Length));
+                    reader.Read();
+                    var solid = jsonSerializer.Deserialize<Wireframe>(reader);
+                    if (solid != null)
+                    {
+                        solid.ReferenceIndex = index;
+                        solid.Validate();
+                        solids.Add(index, solid);
+                    }
                 }
                 /* what if assembly could store other types of solids (e.g. VoxelizedSolids)
                 else if (reader.TokenType == JsonToken.PropertyName)
@@ -247,7 +270,7 @@ namespace TVGL
                     }
                 */
             }
-            assembly.Solids = solids.Values.ToArray();
+            assembly.Solids = solids.OrderBy(pair => pair.Key).Select(pair => pair.Value).ToArray();
             assembly.RootAssembly ??= new SubAssembly(assembly);
             // Only a file without an assembly tree needs its solids placed at the root. When the tree was
             // saved, it already references every instance, and adding them again would duplicate each

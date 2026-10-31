@@ -291,13 +291,14 @@ namespace TVGL
             }
             writer.WriteEndArray();//]
 
+            var primitives = Primitives ?? [];
             List<BorderSegment> borderSegments = null;
             if (BordersDefined)
             {
                 borderSegments = GetBorderSegments().ToList();
                 var primitiveIndices = new Dictionary<PrimitiveSurface, int>();
-                for (var primitiveIndex = 0; primitiveIndex < Primitives.Count; primitiveIndex++)
-                    primitiveIndices[Primitives[primitiveIndex]] = primitiveIndex;
+                for (var primitiveIndex = 0; primitiveIndex < primitives.Count; primitiveIndex++)
+                    primitiveIndices[primitives[primitiveIndex]] = primitiveIndex;
 
                 foreach (var segment in borderSegments)
                 {
@@ -318,7 +319,7 @@ namespace TVGL
             //before actually reading it.
             writer.WriteStartObject();//{
             {
-                foreach (var primitive in Primitives)
+                foreach (var primitive in primitives)
                 {
                     //Name the primitive as its type plus an index. This will make it unique, which is 
                     //required for JSON.
