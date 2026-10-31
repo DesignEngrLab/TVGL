@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 using Newtonsoft.Json;
+using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -119,8 +120,9 @@ namespace TVGL
             }
             else
             {
-                var solidInner = GetMostSignificantSolid(solidAssembly, out _);
-                solid = solidInner as T;
+                solid = typeof(T) == typeof(TessellatedSolid)
+                    ? GetMostSignificantSolid(solidAssembly, out _) as T
+                    : solidAssembly.Solids.OfType<T>().FirstOrDefault();
             }
             return solid != null;
         }
@@ -166,9 +168,9 @@ namespace TVGL
                 }
                 return true;
             }
-            catch
+            catch (Exception exception)
             {
-                Log.Error("Saving to TVGL/TVGLZ failed");
+                Log.Error("Saving to TVGL/TVGLZ failed: " + exception);
                 return false;
             }
         }
@@ -188,22 +190,29 @@ namespace TVGL
                 {
                     writer.Formatting = Formatting.None;
                     writer.WriteStartObject();
-                    writer.WritePropertyName("TessellatedSolid");
-                    var ts = (TessellatedSolid)solid;
-                    var useOnSerialization = false;//Don't serialize the TessellatedSolids directly. We are doing to do this with a stream.
-                    //var jsonString = ((string)JsonConvert.SerializeObject(ts, Newtonsoft.Json.Formatting.None));//ignore last character so that the object is not closed
-                                                                                                                //JSON uses a key value structure. We already wrote the key, now we write the value to end this object. This adds its own comma.
-                    //writer.WriteRawValue(jsonString);
-                    writer.WriteStartObject();
+                    switch (solid)
                     {
-                        ts.StreamWrite(writer);
+                        case TessellatedSolid ts:
+                            writer.WritePropertyName("TessellatedSolid0");
+                            writer.WriteStartObject();
+                            ts.StreamWrite(writer, 0);
+                            writer.WriteEndObject();
+                            break;
+                        case Wireframe wireframe:
+                            writer.WritePropertyName("Wireframe0");
+                            JsonSerializer.CreateDefault().Serialize(writer, wireframe);
+                            break;
+                        default:
+                            throw new NotSupportedException(
+                                $"TVGL serialization does not support {solid.GetType().FullName}.");
                     }
                     writer.WriteEndObject();
                     writer.Close();
                 }
             }
-            catch
+            catch (Exception exception)
             {
+                Log.Error("Saving solid to TVGL/TVGLZ failed: " + exception);
                 return false;
             }
             return true;

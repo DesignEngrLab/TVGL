@@ -1370,6 +1370,11 @@ namespace TVGL
             //In case BordersDefined is incorrect due to writing/reading TVGLZ errors, just force rerun.
             if (solid.Primitives is null)
                 return;
+            if (solid.Primitives.Count == 0)
+            {
+                solid.BordersDefined = true;
+                return;
+            }
             if (solid.Primitives.First().Borders == null) forceRerun = true;
             if (!forceRerun && solid.BordersDefined) return;
 
