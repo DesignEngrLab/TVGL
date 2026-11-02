@@ -9,7 +9,7 @@
 		<ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="BugViewer" Version="0.7.8" />
+		<PackageReference Include="BugViewer" Version="0.8.0" />
 		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="5.0.1" />
 	</ItemGroup>
 	<ItemGroup>

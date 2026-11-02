@@ -48,9 +48,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="BugViewer" Version="0.7.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.13" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.13" />
+		<PackageReference Include="BugViewer" Version="0.8.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.14" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.14" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 	</ItemGroup>
 
