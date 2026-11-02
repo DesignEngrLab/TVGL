@@ -1124,7 +1124,7 @@ namespace TVGL
 
             var tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions();
             tessellatedSolidBuildOptions.CopyElementsPassedToConstructor = false;
-            var faces = bottomFaces.Concat(topFaces).Concat(outerFaces).ToArray();
+            var faces = bottomFaces.Concat(topFaces).Concat(outerFaces).Concat(innerFaces).ToArray();
             var vertices = btmInnerVertices.Concat(btmOuterVertices).Concat(
                 topInnerVertices).Concat(topOuterVertices).ToArray();
             var btmPlane = new Plane(cylinder.MinDistanceAlongAxis, cylinder.Axis);
