@@ -233,15 +233,30 @@ namespace TVGL
                 var s = Math.Sin(angle);
                 localTriangleFaceList.Clear();
                 var triangleArea = double.NegativeInfinity;
+                var sweepPolygon = polygon;
+                Dictionary<Vector2, Vertex2D> sourceVertices = null;
                 if (angle != 0)
                 {
+                    sweepPolygon = CopyForTriangulation(polygon);
                     var rotateMatrix = new Matrix3x3(c, s, -s, c, 0, 0);
-                    polygon.Transform(rotateMatrix); //This destructively alters polygon coordinates, but if used - we rotate back in 22 lines
+                    sweepPolygon.Transform(rotateMatrix);
+                    // Monotone partitioning copies vertices. Map their rotated coordinates
+                    // back to the exact source vertices, avoiding round-trip coordinate drift
+                    // and keeping cap vertices identical to the extrusion's side-wall vertices.
+                    sourceVertices = sweepPolygon.AllPolygons.SelectMany(p => p.Vertices)
+                        .Zip(polygon.AllPolygons.SelectMany(p => p.Vertices),
+                            (rotated, source) => (rotated.Coordinates, Source: source))
+                        .GroupBy(pair => pair.Coordinates)
+                        .ToDictionary(group => group.Key, group => group.First().Source);
                 }
                 try
                 {
-                    foreach (var monoPoly in CreateXMonotonePolygons(polygon))
+                    foreach (var monoPoly in CreateXMonotonePolygons(sweepPolygon))
                         localTriangleFaceList.AddRange(TriangulateMonotonePolygon(monoPoly));
+                    if (sourceVertices != null)
+                        localTriangleFaceList = localTriangleFaceList.Select(tri => tri
+                            .Select(vertex => sourceVertices[vertex.Coordinates]).ToArray()).ToList();
+                    ResolveCollinearBridgeTriangles(localTriangleFaceList);
                     triangleArea = 0.5 * localTriangleFaceList
                        .Sum(tri => Math.Abs((tri[1].Coordinates - tri[0].Coordinates).Cross(tri[2].Coordinates - tri[0].Coordinates)));
                 }
@@ -250,14 +265,14 @@ namespace TVGL
                     //IO.Save(polygon, "errorPolygon" + DateTime.Now.ToOADate() + ".json");
                     //throw new Exception("Unable to triangulate polygon.");
                 }
-                successful = 2 * Math.Abs(polygon.Area - triangleArea) / (polygon.Area + triangleArea) < 0.01;
+                // Equal sweep coordinates can create collinear bridge triangles between
+                // holes. Their zero area passes the area check, but extrusion then contains
+                // degenerate faces. Retry with a different sweep direction instead.
+                successful = 2 * Math.Abs(polygon.Area - triangleArea) / (polygon.Area + triangleArea) < 0.01
+                    && localTriangleFaceList.All(tri => !((tri[1].Coordinates - tri[0].Coordinates)
+                        .Cross(tri[2].Coordinates - tri[0].Coordinates)).IsNegligible());
                 if (!successful && !double.IsNegativeInfinity(triangleArea))
                     Log.Information(polygon.Area + ",   " + triangleArea, 4);
-                if (angle != 0)
-                {
-                    var rotateMatrix = new Matrix3x3(c, -s, s, c, 0, 0);
-                    polygon.Transform(rotateMatrix);
-                }
                 angle = random.NextDouble() * 2 * Math.PI;
 
             } while (!successful && attempts++ < maxNumberOfAttempts);
@@ -279,6 +294,53 @@ namespace TVGL
             }
             triangleFaceList.AddRange(localTriangleFaceList);
             return triangleFaceList;
+        }
+
+        private static Polygon CopyForTriangulation(Polygon source)
+        {
+            var copy = new Polygon(source.Vertices.Select(v => v.Copy()), source.Index,
+                source.IsClosed, preserveCoordinates: true);
+            foreach (var hole in source.InnerPolygons)
+                copy.AddInnerPolygon(CopyForTriangulation(hole));
+            return copy;
+        }
+
+        private static void ResolveCollinearBridgeTriangles(List<Vertex2D[]> triangles)
+        {
+            // A zero-area bridge carries real boundary edges. Removing it alone leaves a
+            // crack. Split the adjacent triangle at its middle vertex instead, retaining
+            // both short edges and replacing the overlapping long edge.
+            for (var i = triangles.Count - 1; i >= 0; i--)
+            {
+                var bridge = triangles[i];
+                if (!((bridge[1].Coordinates - bridge[0].Coordinates)
+                    .Cross(bridge[2].Coordinates - bridge[0].Coordinates)).IsNegligible()) continue;
+                var longest = Enumerable.Range(0, 3).MaxBy(j =>
+                    (bridge[(j + 1) % 3].Coordinates - bridge[j].Coordinates).LengthSquared());
+                var start = bridge[longest].Coordinates;
+                var end = bridge[(longest + 1) % 3].Coordinates;
+                var middle = bridge[(longest + 2) % 3];
+                var replaced = false;
+                for (var j = 0; j < triangles.Count && !replaced; j++)
+                {
+                    if (j == i) continue;
+                    var neighbor = triangles[j];
+                    if (((neighbor[1].Coordinates - neighbor[0].Coordinates)
+                        .Cross(neighbor[2].Coordinates - neighbor[0].Coordinates)).IsNegligible()) continue;
+                    for (var k = 0; k < 3; k++)
+                    {
+                        var a = neighbor[k];
+                        var b = neighbor[(k + 1) % 3];
+                        if (!((a.Coordinates == start && b.Coordinates == end)
+                            || (a.Coordinates == end && b.Coordinates == start))) continue;
+                        var c = neighbor[(k + 2) % 3];
+                        triangles[j] = new[] { a, middle, c };
+                        triangles[i] = new[] { middle, b, c };
+                        replaced = true;
+                        break;
+                    }
+                }
+            }
         }
 
 
@@ -317,7 +379,7 @@ namespace TVGL
                     else next = MiscFunctions.ChooseTightestLeftTurn(nextConnections, current, newVertices[^2]);
                 }
                 RemoveConnection(connections, current, next);
-                yield return new Polygon(newVertices.Select(v => v.Copy()));
+                yield return new Polygon(newVertices.Select(v => v.Copy()), -1, true, preserveCoordinates: true);
             }
         }
 
