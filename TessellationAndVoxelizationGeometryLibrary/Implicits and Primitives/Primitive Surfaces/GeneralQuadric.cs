@@ -315,6 +315,25 @@ namespace TVGL
         {
             return QuadricValue(x) < 0 == IsPositive.GetValueOrDefault(true);
         }
+        /// <summary>
+        /// Returns whether the given point is above the half quadric surface, based on the print direction and the half-plane direction of the quadric.
+        /// </summary>
+        /// <param name="point"></param>
+        /// <param name="printDirection"></param>
+        /// <param name="surface"></param>
+        /// <returns></returns>
+        public bool IsPointAboveHalfQuadric(Vector3 point, Vector3 printDirection)
+        {
+            if (Type == QuadricType.Plane)
+                return QuadricValue(point) > 0;
+            if (printDirection.Dot(HalfPlaneDirection) < 0)
+                return HalfPlaneDirection.Dot(point - StationaryPoint) < 0 || QuadricValue(point) >= 0;
+            return HalfPlaneDirection.Dot(point - StationaryPoint) > 0 && QuadricValue(point) >= 0;
+        }
+
+        public Matrix3x3 SamplesCovariance { get; set; }
+
+        public Vector3 SamplesCentroid { get; set; }
 
         /// <summary>
         /// Gets the normal at point.

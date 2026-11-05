@@ -613,6 +613,74 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Multiplies each matrix element in the first matrix with its corresponding element in the second matrix.
+        /// </summary>
+        /// <param name="value1"></param>
+        /// <param name="value2"></param>
+        /// <returns></returns>
+        public static Matrix3x3 eltwiseMultiply(Matrix3x3 value1, Matrix3x3 value2)
+        {
+            return new Matrix3x3(
+                // First row
+                value1.M11 * value2.M11, value1.M12 * value2.M12, value1.M13 * value2.M13,
+                // Second row
+                value1.M21 * value2.M21, value1.M22 * value2.M22, value1.M23 * value2.M23,
+                // Third row
+                value1.M31 * value2.M31, value1.M32 * value2.M32, value1.M33 * value2.M33
+                );
+        }
+
+        /// <summary>
+        /// Divides each matrix element in the first matrix by its corresponding element in the second matrix.
+        /// </summary>
+        /// <param name="value1"></param>
+        /// <param name="value2"></param>
+        /// <returns></returns>
+        public static Matrix3x3 eltwiseDivide(Matrix3x3 value1, Matrix3x3 value2)
+        {
+            return new Matrix3x3(
+                // First row
+                value1.M11 / value2.M11, value1.M12 / value2.M12, value1.M13 / value2.M13,
+                // Second row
+                value1.M21 / value2.M21, value1.M22 / value2.M22, value1.M23 / value2.M23,
+                // Third row
+                value1.M31 / value2.M31, value1.M32 / value2.M32, value1.M33 / value2.M33
+                );
+        }
+
+        /// <summary>
+        /// Calculates the Frobenius norm of the given matrix.
+        /// </summary>
+        /// <param name="value">The source matrix.</param>
+        /// <returns>The Frobenius norm.</returns>
+        public static double FrobeniusNorm(Matrix3x3 value)
+        {
+            return value.M11 * value.M11 + value.M12 * value.M12 + value.M13 * value.M13 +
+                value.M21 * value.M21 + value.M22 * value.M22 + value.M23 * value.M23 +
+                value.M31 * value.M31 + value.M32 * value.M32 + value.M33 * value.M33;
+        }
+
+        /// <summary>
+        /// Returns the maximum element of the matrix.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns>The max norm</returns>
+        public static double MaxNorm(Matrix3x3 value)
+        {
+            double max = double.MinValue;
+            if (value.M11 > max) max = value.M11;
+            if (value.M12 > max) max = value.M12;
+            if (value.M13 > max) max = value.M13;
+            if (value.M21 > max) max = value.M21;
+            if (value.M22 > max) max = value.M22;
+            if (value.M23 > max) max = value.M23;
+            if (value.M31 > max) max = value.M31;
+            if (value.M32 > max) max = value.M32;
+            if (value.M33 > max) max = value.M33;
+            return max;
+        }
+
+        /// <summary>
         /// Negates the given matrix by multiplying all values by -1.
         /// </summary>
         /// <param name="value">The source matrix.</param>
