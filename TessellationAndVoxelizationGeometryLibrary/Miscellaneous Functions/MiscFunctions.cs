@@ -3103,21 +3103,37 @@ namespace TVGL
             maxAngle = double.NegativeInfinity;
             foreach (var path in borders)
             {
-                FindWindingAroundAxis(path.GetCoordinates(), transform, anchor, out var maxAngleIn, out var minAngleIn, isClosed: true);
-                if (maxAngle < minAngleIn)
+                FindWindingAroundAxis(path.GetCoordinates(), transform, anchor, out var minAngleIn, out var maxAngleIn, isClosed: true);
+                if (!double.IsFinite(minAngleIn) || !double.IsFinite(maxAngleIn)) continue;
+                if (double.IsPositiveInfinity(minAngle))
                 {
-                    minAngleIn += Math.Tau;
-                    maxAngleIn += Math.Tau;
+                    minAngle = minAngleIn;
+                    maxAngle = maxAngleIn;
                 }
-                if (minAngle > maxAngleIn)
+                else
                 {
-                    minAngleIn -= Math.Tau;
-                    maxAngleIn -= Math.Tau;
+                    // Each loop can start on a different turn of the same angular
+                    // coordinate. Align it with the accumulated interval by selecting
+                    // the periodic copy with the smallest combined extent.
+                    var centerShift = Math.Round(((minAngle + maxAngle) - (minAngleIn + maxAngleIn)) / (2 * Math.Tau));
+                    var bestSpan = double.PositiveInfinity;
+                    var bestMin = minAngle;
+                    var bestMax = maxAngle;
+                    for (var offset = -1; offset <= 1; offset++)
+                    {
+                        var shift = (centerShift + offset) * Math.Tau;
+                        var candidateMin = Math.Min(minAngle, minAngleIn + shift);
+                        var candidateMax = Math.Max(maxAngle, maxAngleIn + shift);
+                        if (candidateMax - candidateMin >= bestSpan) continue;
+                        bestSpan = candidateMax - candidateMin;
+                        bestMin = candidateMin;
+                        bestMax = candidateMax;
+                    }
+                    minAngle = bestMin;
+                    maxAngle = bestMax;
                 }
-                if (minAngle > minAngleIn) minAngle = minAngleIn;
-                if (maxAngle < maxAngleIn) maxAngle = maxAngleIn;
 
-                if (Math.Abs(maxAngle - minAngle) > Math.Tau)
+                if (maxAngle - minAngle >= Math.Tau - 1e-12)
                 {
                     minAngle = -Math.PI;
                     maxAngle = Math.PI;

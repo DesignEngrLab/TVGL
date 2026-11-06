@@ -9,12 +9,13 @@
 <main class="presenter-page">
     @foreach (var scene in viewerStack)
     {
-        <WebGPUPresenter.Components.SceneViewer @key="scene.Id" @ref="scene.Viewer" ViewerId="scene.Id" IsActive="scene.Id == activeViewerId" Scenes="scene.Scenes" OnClose="CloseViewerAsync" OnReady="ViewerReadyAsync" OnTriangleSelected="TriangleSelectedAsync" />
+        <WebGPUPresenter.Components.SceneViewer @key="scene.Id" @ref="scene.Viewer" ViewerId="scene.Id" IsActive="scene.Id == activeViewerId" Scenes="scene.Scenes" 
+                                                OnClose="CloseViewerAsync" OnReady="ViewerReadyAsync" OnTriangleSelected="TriangleSelectedAsync" />
     }
 </main>
 <footer class="presenter-controls">
     <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Clear)" @onchange="@(() => nextScenePolicy = ScenePolicy.Clear)" /> Clear (C)</label>
-    <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Save)" @onchange="@(() => nextScenePolicy = ScenePolicy.Save)" /> Save Scene (N)</label>
+    <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.MakeNew)" @onchange="@(() => nextScenePolicy = ScenePolicy.MakeNew)" /> Make New (keep old) (N)</label>
     <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Hold)" @onchange="@(() => nextScenePolicy = ScenePolicy.Hold)" /> Hold (H)</label>
     <button @onclick="ContinueAsync">Continue</button>
 @*     <button type="button" data-presenter-save @onclick="SaveActiveSceneAsync" disabled="@(!CanSaveActiveScene)"
@@ -65,7 +66,7 @@
                     viewerStack.Remove(active);
                 active = null;
             }
-            if (request.IsBlocking && (nextScenePolicy == ScenePolicy.Save || active is null) ||
+            if (request.IsBlocking && (nextScenePolicy == ScenePolicy.MakeNew || active is null) ||
                 !request.IsBlocking && active is null)
             {
                 active = new ViewerScene(nextViewerId++, request.Kind, request.PersistentId);
@@ -158,5 +159,5 @@
         public List<SceneRequest> Scenes { get; } = [];
         public WebGPUPresenter.Components.SceneViewer? Viewer { get; set; }
     }
-    private enum ScenePolicy { Clear, Save, Hold }
+    private enum ScenePolicy { Clear, MakeNew, Hold }
 }
