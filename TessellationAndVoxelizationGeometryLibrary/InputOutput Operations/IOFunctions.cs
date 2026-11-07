@@ -346,7 +346,7 @@ namespace TVGL
             catch (Exception exc)
             {
                 //Report error and return false, rather than throwing an exception.
-                Log.Information("Cannot open file. Message: " + exc.Message);
+                Log.Information("Cannot open file. Message: " + exc);
                 return false;
             }
             return tessellatedSolids != null;
@@ -447,7 +447,7 @@ namespace TVGL
             }
             catch (Exception exc)
             {
-                Log.Information("Cannot open file. Message: " + exc.Message);
+                Log.Information("Cannot open file. Message: " + exc);
                 return false;
             }
             return solidAssembly != null;

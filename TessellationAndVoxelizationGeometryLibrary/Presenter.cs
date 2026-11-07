@@ -84,14 +84,24 @@ namespace TVGL
         /// <summary>Projects multiple vertex collections along a direction and displays them.</summary>
         public static void ShowAndHang(IEnumerable<IEnumerable<Vertex>> vertices, Vector3 direction, string title = "", Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker = MarkerType.Circle)
        => OutputServices.Presenter2D.ShowAndHang(vertices, direction, title, plot2DType, closeShape, marker);
-        /// <summary>Displays a sequence of matrix states and waits for the presentation to close.</summary>
+        /// <summary>Displays one heatmap per step and waits for the presentation to close.</summary>
+        /// <param name="data">Matrices in step order; each matrix supplies the heatmap for one step.</param>
+        /// <param name="title">Optional plot title.</param>
         public static void ShowStepsAndHang(ICollection<double[,]> data, string title = "")
             => OutputServices.Presenter2D.ShowStepsAndHang(data, title);
-        /// <summary>Displays matrix states with associated two-dimensional points.</summary>
+        /// <summary>Displays heatmaps with one two-dimensional point sequence per step.</summary>
+        /// <param name="data">Heatmaps in step order.</param>
+        /// <param name="points">Point sequences in step order, aligned with <paramref name="data"/>.</param>
+        /// <param name="connectPointsInLine">Whether to connect the points in each sequence.</param>
+        /// <param name="title">Optional plot title.</param>
         public static void ShowStepsAndHang(ICollection<double[,]> data, IEnumerable<IEnumerable<Vector2>> points,
             bool connectPointsInLine, string title = "")
              => OutputServices.Presenter2D.ShowStepsAndHang(data, points, connectPointsInLine, title);
-        /// <summary>Displays matrix states with multiple associated point collections.</summary>
+        /// <summary>Displays heatmaps with multiple two-dimensional point sequences per step.</summary>
+        /// <param name="data">Heatmaps in step order.</param>
+        /// <param name="points">Steps, each containing point sequences, each containing points.</param>
+        /// <param name="connectPointsInLine">Connection flags for the point sequences within a step.</param>
+        /// <param name="title">Optional plot title.</param>
         public static void ShowStepsAndHang(ICollection<double[,]> data, IEnumerable<IEnumerable<IEnumerable<Vector2>>> points,
            IEnumerable<bool> connectPointsInLine, string title = "")
             => OutputServices.Presenter2D.ShowStepsAndHang(data, points, connectPointsInLine, title);
@@ -111,13 +121,38 @@ namespace TVGL
         /// <summary>Displays multiple three-dimensional point sets.</summary>
         public static void ShowPointsAndHang(IEnumerable<IEnumerable<Vector3>> pointSets, double radius = 0, IEnumerable<Color> colors = null)
         => OutputServices.Presenter3D.ShowPointsAndHang(pointSets, radius, colors);
-        /// <summary>Displays a sequence of transformed paths and solids.</summary>
+        /// <summary>Displays path and solid timelines in an interactive stepped view and waits until it closes.</summary>
+        /// <remarks>
+        /// The outer lists contain independent groups, not steps. Within each path group, item i is one
+        /// path at step i; within each solid group, item i is one solid at step i. To show several paths
+        /// at a step, use several groups and align their items by step (use an empty path for a missing item).
+        /// A null transform timeline shows all items in that group. With a timeline, Matrix4x4.Null at
+        /// a step shows only that step's item; a real matrix shows items since the last null-transform
+        /// barrier through the current step, transformed by that matrix. Missing transform entries act
+        /// like Matrix4x4.Null. Timelines are indexed by group, then step.
+        /// </remarks>
+        /// <param name="paths">Groups of paths; each path is a sequence of 3D points.</param>
+        /// <param name="pathTransforms">Optional transform timeline for each path group.</param>
+        /// <param name="solids">Optional groups of solids, one solid per group per step.</param>
+        /// <param name="solidTransforms">Optional transform timeline for each solid group.</param>
+        /// <param name="closePaths">Optional closure flags, indexed by group then path/step; missing values repeat the last flag.</param>
+        /// <param name="lineThicknesses">Optional world-space widths, indexed by group then path/step; missing values repeat the last width.</param>
+        /// <param name="colors">Optional colors, indexed by group then path/step; missing values repeat the last color.</param>
         public static void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths, IList<IEnumerable<Matrix4x4>> pathTransforms,
             IList<IEnumerable<Solid>> solids, IList<IEnumerable<Matrix4x4>> solidTransforms, IList<IEnumerable<bool>> closePaths = null,
             IList<IEnumerable<double>> lineThicknesses = null, IList<IEnumerable<Color>> colors = null)
             => OutputServices.Presenter3D.ShowStepsAndHang(paths, pathTransforms, solids, solidTransforms, closePaths,
                 lineThicknesses, colors);
-        /// <summary>Displays a sequence of transformed paths and solids using explicit stepped-presentation options.</summary>
+        /// <summary>Displays path and solid timelines with explicit path-history options and waits until the view closes.</summary>
+        /// <remarks>Group, step, and transform semantics are the same as the overload without <paramref name="options"/>.</remarks>
+        /// <param name="paths">Groups of paths, one path per group per step.</param>
+        /// <param name="pathTransforms">Optional transform timeline for each path group.</param>
+        /// <param name="solids">Optional groups of solids, one solid per group per step.</param>
+        /// <param name="solidTransforms">Optional transform timeline for each solid group.</param>
+        /// <param name="closePaths">Optional per-group, per-path closure flags.</param>
+        /// <param name="lineThicknesses">Optional per-group, per-path world-space widths.</param>
+        /// <param name="colors">Optional per-group, per-path colors.</param>
+        /// <param name="options">Optional limit on the number of recent path steps retained; null uses the default history.</param>
         public static void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths,
             IList<IEnumerable<Matrix4x4>> pathTransforms, IList<IEnumerable<Solid>> solids,
             IList<IEnumerable<Matrix4x4>> solidTransforms, IList<IEnumerable<bool>> closePaths,
@@ -125,13 +160,36 @@ namespace TVGL
             SteppedPresentationOptions options)
             => OutputServices.Presenter3D.ShowStepsAndHang(paths, pathTransforms, solids, solidTransforms, closePaths,
                 lineThicknesses, colors, options);
-        /// <summary>Displays a sequence of transformed paths and triangle-face groups.</summary>
+        /// <summary>Displays path and triangle-face timelines in an interactive stepped view and waits until it closes.</summary>
+        /// <remarks>
+        /// The outer lists are independent groups. Each path group contains one point sequence per step;
+        /// each face group contains one collection of faces per step. Multiple paths at the same step need
+        /// multiple path groups. Transform timelines are indexed by group then step: a null timeline shows
+        /// all group items; Matrix4x4.Null or a missing entry shows only the current item; a real matrix
+        /// transforms the current and earlier items since the most recent null-transform barrier.
+        /// </remarks>
+        /// <param name="paths">Groups of paths, one path per group per step.</param>
+        /// <param name="pathTransforms">Optional transform timeline for each path group.</param>
+        /// <param name="faceGroups">Optional groups of face collections, one collection per group per step.</param>
+        /// <param name="fGTransforms">Optional transform timeline for each face group.</param>
+        /// <param name="closePaths">Optional per-group, per-path closure flags; missing values repeat the last flag.</param>
+        /// <param name="lineThicknesses">Optional per-group, per-path world-space widths; missing values repeat the last width.</param>
+        /// <param name="pathColors">Optional per-group, per-path colors; missing values repeat the last color.</param>
         public static void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths, IList<IEnumerable<Matrix4x4>> pathTransforms,
        IList<IEnumerable<IEnumerable<TriangleFace>>> faceGroups, IList<IEnumerable<Matrix4x4>> fGTransforms, IList<IEnumerable<bool>> closePaths = null,
        IList<IEnumerable<double>> lineThicknesses = null, IList<IEnumerable<Color>> pathColors = null)
                  => OutputServices.Presenter3D.ShowStepsAndHang(paths, pathTransforms, faceGroups, fGTransforms, closePaths,
                      lineThicknesses, pathColors);
-        /// <summary>Displays transformed paths and triangle-face groups using explicit stepped-presentation options.</summary>
+        /// <summary>Displays path and triangle-face timelines with explicit path-history options and waits until the view closes.</summary>
+        /// <remarks>Group, step, and transform semantics are the same as the overload without <paramref name="options"/>.</remarks>
+        /// <param name="paths">Groups of paths, one path per group per step.</param>
+        /// <param name="pathTransforms">Optional transform timeline for each path group.</param>
+        /// <param name="faceGroups">Optional groups of face collections, one collection per group per step.</param>
+        /// <param name="fGTransforms">Optional transform timeline for each face group.</param>
+        /// <param name="closePaths">Optional per-group, per-path closure flags.</param>
+        /// <param name="lineThicknesses">Optional per-group, per-path world-space widths.</param>
+        /// <param name="pathColors">Optional per-group, per-path colors.</param>
+        /// <param name="options">Optional limit on the number of recent path steps retained; null uses the default history.</param>
         public static void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths,
             IList<IEnumerable<Matrix4x4>> pathTransforms, IList<IEnumerable<IEnumerable<TriangleFace>>> faceGroups,
             IList<IEnumerable<Matrix4x4>> fGTransforms, IList<IEnumerable<bool>> closePaths,

@@ -660,6 +660,11 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="index">The index.</param>
         public Polygon(IEnumerable<Vertex2D> vertices, int index = -1, bool isClosed = true)
+            : this(vertices, index, isClosed, false)
+        { }
+
+        internal Polygon(IEnumerable<Vertex2D> vertices, int index, bool isClosed,
+            bool preserveCoordinates)
         {
             IsClosed = isClosed;
             _vertices = vertices as List<Vertex2D> ?? vertices.ToList();
@@ -673,6 +678,7 @@ namespace TVGL
                 NumSigDigits++;
                 tolerance *= 10;
             }
+            if (preserveCoordinates) return;
             var prevX = Math.Round(_vertices[0].X, NumSigDigits);
             var prevY = Math.Round(_vertices[0].Y, NumSigDigits);
 
