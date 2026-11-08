@@ -49,7 +49,7 @@ public partial class SceneViewer
             {
                 await ShowInspectionBillboardAsync(
                 $"Edge {edge.IndexInList}; Vector: {edge.Vector}; Length: {edge.Length:G6}",
-                edge.Center() + 2 * edge.Normal * viewer.PathThickness);
+                edge.Center());
                 await ShowInspectionLineAsync(CreateEdgeHighlight(edge, edge.Normal, viewer.PathThickness));
             }
         }
@@ -59,7 +59,7 @@ public partial class SceneViewer
             if (vertex is not null)
             {
                 await ShowInspectionBillboardAsync($"Vertex {vertex.IndexInList}; {vertex.Coordinates}",
-                vertex.Coordinates + vertex.Normal * viewer.PathThickness);
+                vertex.Coordinates);
                 await ShowInspectionLineAsync(
                 CreateVertexHighlight(vertex.Coordinates + vertex.Normal * viewer.PathThickness));
             }
@@ -68,7 +68,7 @@ public partial class SceneViewer
         {
             await ShowInspectionBillboardAsync(
             $"Face {face.IndexInList}; Normal: {face.Normal}", 
-            face.Center + 2 * face.Normal * viewer.PathThickness);
+            face.Center);
             var colors = SceneGeometry.ExpandedColors(mesh);
             colors[triangleIndex] = FaceHighlightColor;
             await ApplyMeshColorsAsync(mesh, colors);
@@ -79,8 +79,7 @@ public partial class SceneViewer
             if (primitive is null)
                 return;
 
-            await ShowInspectionBillboardAsync(primitive.KeyString, primitive.CenterOfBoundingBox
-            + 2 * face.Normal * viewer.PathThickness);
+            await ShowInspectionBillboardAsync(primitive.KeyString, PrimitiveInspectionAnchor(primitive, point));
             var highlight = primitive switch
             {
                 Plane => new ColorRgba(0, 255, 0),
@@ -203,13 +202,56 @@ public partial class SceneViewer
     private static NumericsVector3 ToNumerics(TVGL.Vector3 position) =>
     new((float)position.X, (float)position.Y, (float)position.Z);
 
+    private TVGL.Vector3 PrimitiveInspectionAnchor(PrimitiveSurface primitive, TVGL.Vector3 point)
+    {
+        if (viewer?.Camera is not { } camera)
+            return point;
+
+        var towardCamera = SightVectorTowardCamera(camera, ToNumerics(point), viewer.Options.IsProjectionCamera);
+        if (towardCamera.LengthSquared() == 0)
+            return point;
+
+        // Use the intersection nearest the selected mesh point, on either side of it.
+        // The fitted primitive may lie slightly in front of or behind the mesh.
+        var direction = NumericsVector3.Normalize(towardCamera);
+        try
+        {
+            var intersection = primitive.LineIntersectionClosest(point,
+                new TVGL.Vector3(direction.X, direction.Y, direction.Z), out var lineT);
+            return double.IsFinite(lineT) && double.IsFinite(intersection.X)
+                && double.IsFinite(intersection.Y) && double.IsFinite(intersection.Z)
+                ? intersection : point;
+        }
+        catch (NotImplementedException)
+        {
+            // Some primitive types do not implement line intersection.
+            return point;
+        }
+    }
+
+    private static NumericsVector3 SightVectorTowardCamera(OrbitCamera camera, NumericsVector3 point, bool perspective)
+    {
+        var toCamera = camera.Position - point;
+        if (perspective)
+            return toCamera;
+
+        // CameraMatrix's third row points backward, toward the camera, in world space.
+        var matrix = camera.CameraMatrix;
+        var backward = new NumericsVector3(matrix.M31, matrix.M32, matrix.M33);
+        return backward * NumericsVector3.Dot(toCamera, backward);
+    }
+
     private async Task ShowInspectionBillboardAsync(string text, TVGL.Vector3 position)
     {
         if (viewer is null)
             return;
 
+        var anchor = ToNumerics(position);
+        if (viewer.Camera is { } camera)
+            anchor += 0.1f * SightVectorTowardCamera(camera, anchor, viewer.Options.IsProjectionCamera);
+
         await viewer.RemoveTextBillboardAsync(new TextBillboard { Id = "InspectionInfo", Text = "", Vertices = [], BackgroundColor = default, TextColor = default });
-        await viewer.AddTextBillboardAsync("InspectionInfo", text, ToNumerics(position),
+        await viewer.AddTextBillboardAsync("InspectionInfo", text, anchor,
               new ColorRgba(255, 255, 224, 230), new ColorRgba(0, 0, 0), 10 * viewer.PathThickness, 0f, 1f);
     }
 

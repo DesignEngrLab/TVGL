@@ -1041,8 +1041,12 @@ namespace TVGL
                         }
                         if (numCrossingEdges == crossingEdges.Count)
                             crossingEdges.RemoveAt(crossingEdges.Count - 1);
-                        faces.AddRange(tempNewFaces);
                     }
+                    // Later flip rounds can replace faces created by earlier rounds.
+                    // Publish only the final faces after the whole constraint has been
+                    // processed; adding them inside the loop leaves stale triangles (and
+                    // sometimes duplicates) in the result even though their edges changed.
+                    faces.AddRange(tempNewFaces);
                 }
             }
             foreach (var v in delaunay2D.Vertices)

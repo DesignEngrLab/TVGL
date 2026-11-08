@@ -9,8 +9,10 @@
 <main class="presenter-page">
     @foreach (var scene in viewerStack)
     {
-        <WebGPUPresenter.Components.SceneViewer @key="scene.Id" @ref="scene.Viewer" ViewerId="scene.Id" IsActive="scene.Id == activeViewerId" Scenes="scene.Scenes" 
-                                                OnClose="CloseViewerAsync" OnReady="ViewerReadyAsync" OnTriangleSelected="TriangleSelectedAsync" />
+        <div @key="scene.Id" class="presenter-viewer">
+            <WebGPUPresenter.Components.SceneViewer @ref="scene.Viewer" ViewerId="scene.Id" IsActive="scene.Id == activeViewerId" Scenes="scene.Scenes"
+                                                   OnClose="CloseViewerAsync" OnReady="ViewerReadyAsync" OnTriangleSelected="TriangleSelectedAsync" />
+        </div>
     }
 </main>
 <footer class="presenter-controls">

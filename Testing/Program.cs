@@ -41,18 +41,22 @@ namespace TVGLUnitTestsAndBenchmarking
             OutputServices.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
 
-            var files = dirInfo.GetFiles("*.step");
-            foreach (var fileName in files.Skip(0))
-            {
-                Console.WriteLine("Attempting to open: " + fileName.Name);
-                var solid = STEP.Open(fileName.FullName, linearDeflection: 0.1, angularDeflection: 0.5);
-                DebugUtilities.ShowPrimitives(solid);
-                //var solids = IO.Open(fileName.FullName);
-                //if (solids is not TessellatedSolid ts)
-                //    continue;
-                Presenter.ShowAndHang(solid);
-                //Presenter.ShowAndHang(GetRandomPolygonThroughSolids(solid));
-            }
+var cyl1 = new Torus(new Vector3(1,2,3), Vector3.UnitX, 10.0, 3,true);
+// cyl1.MinDistanceAlongAxis = 5;
+// cyl1.MaxDistanceAlongAxis = 25;
+Presenter.ShowAndHang(cyl1.Tessellate());
+            // var files = dirInfo.GetFiles("*.step");
+            // foreach (var fileName in files.Skip(0))
+            // {
+            //     Console.WriteLine("Attempting to open: " + fileName.Name);
+            //     var solid = STEP.Open(fileName.FullName, linearDeflection: 0.1, angularDeflection: 0.5);
+            //     DebugUtilities.ShowPrimitives(solid);
+            //     //var solids = IO.Open(fileName.FullName);
+            //     //if (solids is not TessellatedSolid ts)
+            //     //    continue;
+            //     Presenter.ShowAndHang(solid);
+            //     //Presenter.ShowAndHang(GetRandomPolygonThroughSolids(solid));
+            // }
         }
 
         private static void RunStepImporterTest()
