@@ -128,6 +128,22 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Returns true if the two convex hulls overlap (basically if a vertex of one
+        /// is inside the other).
+        /// </summary>
+        /// <param name="other"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
+        public bool Overlaps(ConvexHull3D other, double offset = 0)
+        {
+            foreach (var face in Faces)
+                if (!other.IsInside(face.A.Coordinates, offset)) return false;
+            foreach (var face in other.Faces)
+                if (!IsInside(face.A.Coordinates, offset)) return false;
+            return true;
+        }
+
+        /// <summary>
         /// Finds the intersection points between the line and the convex hull. The first point is with a face that has 
         /// nearly the same direction as the line. The second one is opposite.
         /// </summary>
