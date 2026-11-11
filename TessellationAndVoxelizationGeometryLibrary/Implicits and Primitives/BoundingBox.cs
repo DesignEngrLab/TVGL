@@ -133,7 +133,7 @@ namespace TVGL
                     vectors[1].IsAlignedOrReverse(Vector3.UnitY, dotAligned) &&
                     vectors[2].IsAlignedOrReverse(Vector3.UnitZ, dotAligned);
         }
-        private const double dotAligned = 0.999; // about 2.5 degrees
+        private const double dotAligned = 1.0 - Constants.BaseTolerance; // within ~0.0026 degrees
 
 
         /// <summary>
@@ -190,7 +190,7 @@ namespace TVGL
         {
             get
             {
-                return _bounds ??= GetBoxBounds(Directions, TranslationFromOrigin);
+                return _bounds ??= GetBoxBounds(Vectors, TranslationFromOrigin);
             }
         }
         private Vector3[] _bounds;
@@ -361,7 +361,7 @@ namespace TVGL
             get
             {
                 if (_center.IsNull())
-                    _center = TranslationFromOrigin + 0.5 * (Directions[0] + Directions[1] + Directions[2]);
+                    _center = TranslationFromOrigin + 0.5 * (Vectors[0] + Vectors[1] + Vectors[2]);
                 return _center;
             }
         }
@@ -647,25 +647,91 @@ namespace TVGL
             return true;
         }
 
+        /// <summary>
+        /// Determines whether this bounding box intersects or touches another bounding box.
+        /// </summary>
+        /// <param name="other">The other bounding box.</param>
+        /// <returns><see langword="true"/> when the boxes overlap or touch; otherwise, <see langword="false"/>.</returns>
         public bool Intersects(BoundingBox other)
         {
-            if (IsAxisAligned && other.IsAxisAligned)
-                return Bounds[0].X < other.Bounds[1].X &&
-                    Bounds[1].X > other.Bounds[0].X &&
-                    Bounds[0].Y < other.Bounds[1].Y &&
-                    Bounds[1].Y > other.Bounds[0].Y &&
-                    Bounds[0].Z < other.Bounds[1].Z &&
-                    Bounds[1].Z > other.Bounds[0].Z;
-            else
-            {
-                var corners = other.Corners;
-                for (int i = 0; i < 8; i++)
-                    if (IsInside(corners[i])) return true;
-                corners = Corners;
-                for (int i = 0; i < 8; i++)
-                    if (other.IsInside(corners[i])) return true;
+            if (other is null)
+                throw new ArgumentNullException(nameof(other));
+
+            var thisBounds = Bounds;
+            var otherBounds = other.Bounds;
+            if (thisBounds[0].X > otherBounds[1].X || thisBounds[1].X < otherBounds[0].X ||
+                thisBounds[0].Y > otherBounds[1].Y || thisBounds[1].Y < otherBounds[0].Y ||
+                thisBounds[0].Z > otherBounds[1].Z || thisBounds[1].Z < otherBounds[0].Z)
                 return false;
-            }
+
+            if (IsAxisAligned && other.IsAxisAligned)
+                return true;
+
+            return IntersectsOriented(other);
+        }
+
+        private bool IntersectsOriented(BoundingBox other)
+        {
+            // Gottschalk's 15-axis OBB SAT in this box's local orthonormal frame (face axes + edge cross products).
+            // A small epsilon on |R_ij| prevents false separation when parallel edges yield near-zero cross axes.
+            const double parallelEdgeEpsilon = 1e-12;
+            var a0 = Directions[0];
+            var a1 = Directions[1];
+            var a2 = Directions[2];
+            var b0 = other.Directions[0];
+            var b1 = other.Directions[1];
+            var b2 = other.Directions[2];
+
+            var aHalf0 = 0.5 * Math.Abs(Dimensions.X);
+            var aHalf1 = 0.5 * Math.Abs(Dimensions.Y);
+            var aHalf2 = 0.5 * Math.Abs(Dimensions.Z);
+            var bHalf0 = 0.5 * Math.Abs(other.Dimensions.X);
+            var bHalf1 = 0.5 * Math.Abs(other.Dimensions.Y);
+            var bHalf2 = 0.5 * Math.Abs(other.Dimensions.Z);
+
+            var r00 = a0.Dot(b0); var r01 = a0.Dot(b1); var r02 = a0.Dot(b2);
+            var r10 = a1.Dot(b0); var r11 = a1.Dot(b1); var r12 = a1.Dot(b2);
+            var r20 = a2.Dot(b0); var r21 = a2.Dot(b1); var r22 = a2.Dot(b2);
+
+            var absR00 = Math.Abs(r00) + parallelEdgeEpsilon;
+            var absR01 = Math.Abs(r01) + parallelEdgeEpsilon;
+            var absR02 = Math.Abs(r02) + parallelEdgeEpsilon;
+            var absR10 = Math.Abs(r10) + parallelEdgeEpsilon;
+            var absR11 = Math.Abs(r11) + parallelEdgeEpsilon;
+            var absR12 = Math.Abs(r12) + parallelEdgeEpsilon;
+            var absR20 = Math.Abs(r20) + parallelEdgeEpsilon;
+            var absR21 = Math.Abs(r21) + parallelEdgeEpsilon;
+            var absR22 = Math.Abs(r22) + parallelEdgeEpsilon;
+
+            var d = other.Center - Center;
+            var t0 = d.Dot(a0);
+            var t1 = d.Dot(a1);
+            var t2 = d.Dot(a2);
+
+            // 3 face axes of this box
+            if (Math.Abs(t0) > aHalf0 + bHalf0 * absR00 + bHalf1 * absR01 + bHalf2 * absR02) return false;
+            if (Math.Abs(t1) > aHalf1 + bHalf0 * absR10 + bHalf1 * absR11 + bHalf2 * absR12) return false;
+            if (Math.Abs(t2) > aHalf2 + bHalf0 * absR20 + bHalf1 * absR21 + bHalf2 * absR22) return false;
+
+            // 3 face axes of other box
+            if (Math.Abs(t0 * r00 + t1 * r10 + t2 * r20) > aHalf0 * absR00 + aHalf1 * absR10 + aHalf2 * absR20 + bHalf0) return false;
+            if (Math.Abs(t0 * r01 + t1 * r11 + t2 * r21) > aHalf0 * absR01 + aHalf1 * absR11 + aHalf2 * absR21 + bHalf1) return false;
+            if (Math.Abs(t0 * r02 + t1 * r12 + t2 * r22) > aHalf0 * absR02 + aHalf1 * absR12 + aHalf2 * absR22 + bHalf2) return false;
+
+            // 9 edge-edge cross-product axes (Ai x Bj)
+            if (Math.Abs(t2 * r10 - t1 * r20) > aHalf1 * absR20 + aHalf2 * absR10 + bHalf1 * absR02 + bHalf2 * absR01) return false;
+            if (Math.Abs(t2 * r11 - t1 * r21) > aHalf1 * absR21 + aHalf2 * absR11 + bHalf0 * absR02 + bHalf2 * absR00) return false;
+            if (Math.Abs(t2 * r12 - t1 * r22) > aHalf1 * absR22 + aHalf2 * absR12 + bHalf0 * absR01 + bHalf1 * absR00) return false;
+
+            if (Math.Abs(t0 * r20 - t2 * r00) > aHalf0 * absR20 + aHalf2 * absR00 + bHalf1 * absR12 + bHalf2 * absR11) return false;
+            if (Math.Abs(t0 * r21 - t2 * r01) > aHalf0 * absR21 + aHalf2 * absR01 + bHalf0 * absR12 + bHalf2 * absR10) return false;
+            if (Math.Abs(t0 * r22 - t2 * r02) > aHalf0 * absR22 + aHalf2 * absR02 + bHalf0 * absR11 + bHalf1 * absR10) return false;
+
+            if (Math.Abs(t1 * r00 - t0 * r10) > aHalf0 * absR10 + aHalf1 * absR00 + bHalf1 * absR22 + bHalf2 * absR21) return false;
+            if (Math.Abs(t1 * r01 - t0 * r11) > aHalf0 * absR11 + aHalf1 * absR01 + bHalf0 * absR22 + bHalf2 * absR20) return false;
+            if (Math.Abs(t1 * r02 - t0 * r12) > aHalf0 * absR12 + aHalf1 * absR02 + bHalf0 * absR21 + bHalf1 * absR20) return false;
+
+            return true;
         }
     }
 }
