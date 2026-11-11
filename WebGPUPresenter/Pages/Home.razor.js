@@ -20,7 +20,7 @@ export function registerKeyboardShortcuts(dotNetReference) {
                 (target.isContentEditable || ["INPUT", "SELECT", "TEXTAREA"].includes(target.tagName));
             const save = document.querySelector('[data-presenter-save]');
             if (!save || save.disabled || document.querySelector('dialog[open]') ||
-                (editor && !target.closest('.scene-viewer'))) return;
+                (editor && !target.closest('.presenter-viewer'))) return;
             event.preventDefault();
             if (!event.repeat) save.click();
             return;

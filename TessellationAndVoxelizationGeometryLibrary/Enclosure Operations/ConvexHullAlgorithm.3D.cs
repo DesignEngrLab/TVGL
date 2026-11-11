@@ -29,15 +29,18 @@ namespace TVGL
         /// <param name="vertexIndices"></param>
         /// <param name="tolerance"></param>
         /// <returns></returns>
-        public static bool Create(IList<Vector3> points, out ConvexHull3D convexHull,
+        public static bool Create(ICollection<Vector3> points, out ConvexHull3D convexHull,
             out List<int> vertexIndices, double tolerance = double.NaN)
         {
             bool success = false;
             var n = points.Count;
             var vertices = new Vertex[n];
-            for (int i = 0; i < n; i++)
-                vertices[i] = new Vertex(points[i], i);
-
+            int i = 0;
+            foreach (var p in points)
+            {
+                vertices[i] = new Vertex(p, i);
+                i++;
+            }
             success = Create(vertices, out convexHull, true, true, tolerance);
             if (success)
             {

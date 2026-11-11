@@ -128,6 +128,17 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Returns true if the convex hulls intersect or touch within the default GJK/EPA tolerance.
+        /// </summary>
+        /// <param name="other">The other convex hull.</param>
+        /// <returns>True for penetration or tolerance contact, including containment.</returns>
+        /// <exception cref="System.InvalidOperationException">The distance solver did not converge.</exception>
+        public bool Overlaps(ConvexHull3D other)
+        {
+            return Vertices.DistanceBetween(other.Vertices, out _) <= 0;
+        }
+
+        /// <summary>
         /// Finds the intersection points between the line and the convex hull. The first point is with a face that has 
         /// nearly the same direction as the line. The second one is opposite.
         /// </summary>

@@ -9,13 +9,15 @@
 <main class="presenter-page">
     @foreach (var scene in viewerStack)
     {
-        <WebGPUPresenter.Components.SceneViewer @key="scene.Id" @ref="scene.Viewer" ViewerId="scene.Id" IsActive="scene.Id == activeViewerId" Scenes="scene.Scenes" 
-                                                OnClose="CloseViewerAsync" OnReady="ViewerReadyAsync" OnTriangleSelected="TriangleSelectedAsync" />
+        <div @key="scene.Id" class="presenter-viewer">
+            <WebGPUPresenter.Components.SceneViewer @ref="scene.Viewer" ViewerId="scene.Id" IsActive="scene.Id == activeViewerId" Scenes="scene.Scenes"
+                                                   OnClose="CloseViewerAsync" OnReady="ViewerReadyAsync" OnTriangleSelected="TriangleSelectedAsync" />
+        </div>
     }
 </main>
 <footer class="presenter-controls">
     <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Clear)" @onchange="@(() => nextScenePolicy = ScenePolicy.Clear)" /> Clear (C)</label>
-    <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.MakeNew)" @onchange="@(() => nextScenePolicy = ScenePolicy.MakeNew)" /> Make New (keep old) (N)</label>
+    <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.MakeNew)" @onchange="@(() => nextScenePolicy = ScenePolicy.MakeNew)" /> Make New (keep old; N)</label>
     <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Hold)" @onchange="@(() => nextScenePolicy = ScenePolicy.Hold)" /> Hold (H)</label>
     <button @onclick="ContinueAsync">Continue</button>
 @*     <button type="button" data-presenter-save @onclick="SaveActiveSceneAsync" disabled="@(!CanSaveActiveScene)"

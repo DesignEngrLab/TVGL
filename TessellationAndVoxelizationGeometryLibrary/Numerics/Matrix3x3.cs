@@ -614,11 +614,12 @@ namespace TVGL
 
         /// <summary>
         /// Multiplies each matrix element in the first matrix with its corresponding element in the second matrix.
+        /// This is also known as the Hadamard product or Schur product.
         /// </summary>
         /// <param name="value1"></param>
         /// <param name="value2"></param>
         /// <returns></returns>
-        public static Matrix3x3 eltwiseMultiply(Matrix3x3 value1, Matrix3x3 value2)
+        public static Matrix3x3 MultiplyElementWise(Matrix3x3 value1, Matrix3x3 value2)
         {
             return new Matrix3x3(
                 // First row
@@ -632,11 +633,12 @@ namespace TVGL
 
         /// <summary>
         /// Divides each matrix element in the first matrix by its corresponding element in the second matrix.
+        /// This is basically the inverse of the Hadamard product or Schur product.
         /// </summary>
         /// <param name="value1"></param>
         /// <param name="value2"></param>
         /// <returns></returns>
-        public static Matrix3x3 eltwiseDivide(Matrix3x3 value1, Matrix3x3 value2)
+        public static Matrix3x3 DivideElementWise(Matrix3x3 value1, Matrix3x3 value2)
         {
             return new Matrix3x3(
                 // First row
@@ -654,6 +656,15 @@ namespace TVGL
         /// <param name="value">The source matrix.</param>
         /// <returns>The Frobenius norm.</returns>
         public static double FrobeniusNorm(Matrix3x3 value)
+        {
+            return Math.Sqrt(FrobeniusNormSquared(value));
+        }
+        /// <summary>
+        /// Calculates the squared Frobenius norm of the given matrix.
+        /// </summary>
+        /// <param name="value">The source matrix.</param>
+        /// <returns>The Frobenius norm.</returns>
+        public static double FrobeniusNormSquared(Matrix3x3 value)
         {
             return value.M11 * value.M11 + value.M12 * value.M12 + value.M13 * value.M13 +
                 value.M21 * value.M21 + value.M22 * value.M22 + value.M23 * value.M23 +

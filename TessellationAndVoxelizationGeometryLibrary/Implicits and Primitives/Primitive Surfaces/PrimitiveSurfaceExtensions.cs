@@ -532,8 +532,8 @@ namespace TVGL
             //for (int i = 0; i < 4; i++)
             //    foreach (var f in fGroups[i])
             //        f.Color = fcolors[i];
-            //Presenter.ShowAndHang( 
-            //         edgeIntersections.Keys.Select(e => new[] { e.From.Coordinates, e.To.Coordinates }), lineThicknesses: [3],
+            //Presenter.ShowAndHang(
+            //         edgeIntersections.Keys.Select(e => new[] { e.From.Coordinates, e.To.Coordinates }),
             //             colors: [new Color(KnownColors.Black)],
             //             faces: surface.Faces
             //             );

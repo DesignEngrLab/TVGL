@@ -17,7 +17,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-//using System.Text.Json.Serialization;
 
 namespace TVGL
 {
@@ -132,12 +131,7 @@ namespace TVGL
             }
             set { type = value; }
         }
-        /// <summary>
-        /// This preserves information about which side of the stationary point were the original sample points 
-        /// that created the quadric in the geodesic slicer. If the surface cuts the model on the other side of 
-        /// the stationary point, these outlines can be immediately ruled.
-        /// </summary>
-        public Vector3 HalfPlaneDirection { get; set; } = Vector3.Zero;
+
         /// <summary>
         /// Gets all the coefficients as an enumerable in the order listed above.
         /// </summary>
@@ -315,25 +309,6 @@ namespace TVGL
         {
             return QuadricValue(x) < 0 == IsPositive.GetValueOrDefault(true);
         }
-        /// <summary>
-        /// Returns whether the given point is above the half quadric surface, based on the print direction and the half-plane direction of the quadric.
-        /// </summary>
-        /// <param name="point"></param>
-        /// <param name="printDirection"></param>
-        /// <param name="surface"></param>
-        /// <returns></returns>
-        public bool IsPointAboveHalfQuadric(Vector3 point, Vector3 printDirection)
-        {
-            if (Type == QuadricType.Plane)
-                return QuadricValue(point) > 0;
-            if (printDirection.Dot(HalfPlaneDirection) < 0)
-                return HalfPlaneDirection.Dot(point - StationaryPoint) < 0 || QuadricValue(point) >= 0;
-            return HalfPlaneDirection.Dot(point - StationaryPoint) > 0 && QuadricValue(point) >= 0;
-        }
-
-        public Matrix3x3 SamplesCovariance { get; set; }
-
-        public Vector3 SamplesCentroid { get; set; }
 
         /// <summary>
         /// Gets the normal at point.
@@ -837,11 +812,6 @@ namespace TVGL
                 if (Amatrix.solve(b, out var coefficients, true))
                 {
                     var quadric = new GeneralQuadric(coefficients.Concat([-1]));
-                    //errSqd = quadric.XSqdCoeff * Sxx + quadric.YSqdCoeff * Syy + quadric.ZSqdCoeff * Szz
-                    //    + quadric.XYCoeff * Sxy + quadric.XZCoeff * Sxz + quadric.YZCoeff * Syz
-                    //    + quadric.XCoeff * Sx + quadric.YCoeff * Sy + quadric.ZCoeff * Sz + quadric.W;
-
-                    //errSqd *= errSqd / numVerts;
                     errSqd = quadric.CalculateMeanSquareError(samples);
                     return quadric;
                 }
@@ -1250,5 +1220,8 @@ namespace TVGL
                 0.5 * XZCoeff, 0.5 * YZCoeff, ZSqdCoeff, 0.5 * ZCoeff,
                 0.5 * XCoeff, 0.5 * YCoeff, 0.5 * ZCoeff, W);
         }
+
+        public Vector3 HalfPlaneDirection { get; set; }
+
     }
 }
