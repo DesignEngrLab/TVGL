@@ -104,6 +104,7 @@ namespace TVGL
             _area = double.NaN;
             _maxError = double.NaN;
             _meanSquaredError = double.NaN;
+            _largestFace = null;
             //isPositive = null;
             Borders = null;
             BorderSegments = null;
@@ -133,7 +134,10 @@ namespace TVGL
             Vertices = new HashSet<Vertex>();
             foreach (var face in Faces)
                 foreach (var v in face.Vertices)
-                    Vertices.Add(v);
+                {
+                    if (Vertices.Add(v) && v.IndexInList < 0)
+                        v.IndexInList = Vertices.Count - 1;
+                }
         }
 
 
@@ -959,10 +963,9 @@ namespace TVGL
                 var i = 0;
                 //NumberOfVertices = vertices.Count;
                 var newVertices = new Vertex[Vertices.Count];
-                var oldNewVertexIndexDict = new Dictionary<int, int>();
                 foreach (var vertex in Vertices)
                 {
-                    oldNewVertexIndexDict.Add(vertex.IndexInList, i);
+                    vertex.IndexInList = i;
                     newVertices[i] = new Vertex(vertex.Coordinates, i);
                     i++;
                 }
@@ -970,8 +973,8 @@ namespace TVGL
                 var newFaces = new TriangleFace[Faces.Count];
                 foreach (var oldFace in Faces)
                 {
-                    var newFace = new TriangleFace(newVertices[oldNewVertexIndexDict[oldFace.A.IndexInList]],
-                        newVertices[oldNewVertexIndexDict[oldFace.B.IndexInList]], newVertices[oldNewVertexIndexDict[oldFace.C.IndexInList]]);
+                    var newFace = new TriangleFace(newVertices[oldFace.A.IndexInList],
+                        newVertices[oldFace.B.IndexInList], newVertices[oldFace.C.IndexInList]);
                     newFace.IndexInList = i;
                     newFace.Color = oldFace.Color;
                     newFaces[i] = newFace;
