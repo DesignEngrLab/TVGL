@@ -1,615 +1,332 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace TVGL
 {
+    /// <summary>Distance and penetration queries between the convex hulls of two point lists.</summary>
     public static partial class ConvexHullGJK
     {
+        // Geometry predicates use a roundoff threshold independently of the requested distance accuracy.
+        private const double RoundoffTolerance = 1.5e-14;
+
         /// <summary>
-        /// Provides distance calculations between convex hulls using the Gilbert-Johnson-Keerthi algorithm.
+        /// Returns the shortest separation distance, zero for touching, or the negative minimum
+        /// translation distance to touching for overlapping hulls (without rotating either hull).
         /// </summary>
+        /// <param name="cvxHullPoints1">Points defining the first convex hull; their order is unchanged.</param>
+        /// <param name="cvxHullPoints2">Points defining the second convex hull; their order is unchanged.</param>
+        /// <param name="v">
+        /// The second witness point minus the first. For separation this points from the first hull
+        /// to the second. During penetration, translating the second hull by -v brings the witnesses
+        /// together. Its length is the absolute signed distance, within numerical tolerance.
+        /// </param>
+        /// <returns>The signed distance, using the default tolerances of <see cref="ConvexHullDistanceOptions"/>.</returns>
+        /// <exception cref="InvalidOperationException">The numerical solver did not converge.</exception>
         /// <remarks>
-        /// This implementation is adapted from the C implementation OpenGJK by Mattia Montanari:
-        /// <see href="https://github.com/MattiaMontanari/openGJK/" />.
+        /// Use <see cref="DistanceBetweenDetailed{T1, T2}"/> for vertex indices, interpolation weights,
+        /// custom tolerances and an explicit convergence status. The input lists need not contain
+        /// faces, be sorted, or contain only extreme vertices.
         /// </remarks>
+        public static double DistanceBetween<T1, T2>(this IList<T1> cvxHullPoints1,
+            IList<T2> cvxHullPoints2, out Vector3 v)
+            where T1 : IVector3D where T2 : IVector3D
+        {
+            var result = cvxHullPoints1.DistanceBetweenDetailed(cvxHullPoints2);
+            if (!result.Converged) throw new InvalidOperationException(result.FailureReason);
+            v = result.Second.Point - result.First.Point;
+            return result.SignedDistance;
+        }
+
         /// <summary>
-        /// Finds the distance between two convex hulls. A positive value is the shortest distance
-        /// between the solids, a negative value means the solids overlap. This implementation is
-        /// not accurate for negative values.
+        /// Computes signed distance and reconstructable surface witnesses using GJK for separation
+        /// and EPA for penetration. A negative distance is the negative minimum translation depth.
         /// </summary>
-        /// <param name="cvxHullPoints1">The convex hull points for 1.</param>
-        /// <param name="cvxHullPoints2">The  convex hull points 2.</param>
-        /// <param name="v">The vector,v, from the subject object to the other object.</param>
-        /// <returns>The signed distance between the two convex hulls. This implementation is
-        /// not accurate for negative values.</returns>
-        public static double DistanceBetween<T1, T2>(this IList<T1> cvxHullPoints1, IList<T2> cvxHullPoints2, out Vector3 v)
-            where T1 : IVector3D
-            where T2 : IVector3D
+        /// <param name="cvxHullPoints1">A nonempty list of finite coordinates defining the first convex hull.</param>
+        /// <param name="cvxHullPoints2">A nonempty list of finite coordinates defining the second convex hull.</param>
+        /// <param name="options">Distance accuracy and iteration limits; null uses the defaults.</param>
+        /// <returns>
+        /// Witness indices refer to positions in the supplied lists, rather than
+        /// <see cref="TessellationBaseClass.IndexInList"/>. Failed results have no witnesses and a NaN distance.
+        /// </returns>
+        /// <remarks>
+        /// Second.Point - First.Point approximately equals SignedDistance * Normal.
+        /// For penetration, translating the second hull by -SignedDistance * Normal brings it to touching.
+        /// Touching is determined within tolerance, so its witnesses may differ slightly.
+        /// Equally good witnesses and normals need not be unique. Points, segments and planar hulls
+        /// are supported; an intersection admitting arbitrarily small separating translations in
+        /// three dimensions has zero depth. No input coordinates, indices or topology are modified.
+        /// </remarks>
+        public static ConvexHullDistanceResult DistanceBetweenDetailed<T1, T2>(this IList<T1> cvxHullPoints1,
+            IList<T2> cvxHullPoints2, ConvexHullDistanceOptions options = null)
+            where T1 : IVector3D where T2 : IVector3D
         {
-            int k = 0;                // Iteration counter.
-            const int mk = 25;                 // Maximum number of GJK iterations.
-            const double eps_rel = Constants.BaseTolerance; // Tolerance on relative error.
-            const double eps_tot = Constants.BaseTolerance / 100; // Tolerance on absolute distance.
-
-            const double eps_rel2 = eps_rel * eps_rel;
-            double norm2Wmax = 0;
-
-            /* Initialise search direction */
-            var currentPt1 = cvxHullPoints1[0];
-            var currentPt2 = cvxHullPoints2[0];
-            v = new Vector3(currentPt1.X - currentPt2.X, currentPt1.Y - currentPt2.Y, currentPt1.Z - currentPt2.Z);
-            var vLength = v.LengthSquared();
-            /* Inialise simplex */
-            var numVertsInSimplex = 1;
-            var simplex = new Vector3[4];
-            simplex[0] = v;
-            /* Begin GJK iteration */
-            do
+            options ??= new ConvexHullDistanceOptions();
+            options.Validate();
+            var query = new DistanceQuery(Snapshot(cvxHullPoints1, nameof(cvxHullPoints1)),
+                Snapshot(cvxHullPoints2, nameof(cvxHullPoints2)), options);
+            Span<SupportVertex> simplex = stackalloc SupportVertex[4];
+            Span<double> weights = stackalloc double[4];
+            simplex[0] = query.Support(Vector3.UnitX);
+            weights[0] = 1;
+            var count = 1;
+            var closest = simplex[0].Difference;
+            for (var iteration = 1; iteration <= options.MaxGjkIterations; iteration++)
             {
-                k++;
+                var distance = closest.Length();
+                if (distance <= query.Tolerance)
+                    return Penetration(query, simplex[..count], weights[..count], iteration);
 
-                /* Support function */
-                currentPt1 = support(cvxHullPoints1, currentPt1, -v);
-                currentPt2 = support(cvxHullPoints2, currentPt2, v);
-                var w = new Vector3(currentPt1.X - currentPt2.X, currentPt1.Y - currentPt2.Y, currentPt1.Z - currentPt2.Z);
+                var support = query.Support(-closest / distance);
+                // Both sides have units of distance in the normalized coordinate system.
+                var improvement = distance - closest.Dot(support.Difference) / distance;
+                if (improvement <= query.Tolerance)
+                    return query.Result(simplex[..count], weights[..count], false, iteration, 0);
+                if (Contains(simplex[..count], support))
+                    return Failure("GJK stalled before reaching the requested accuracy.", iteration, 0);
 
-                /* Test first exit condition (new point already in simplex/can't move
-                 * further) */
-                double exeedtol_rel = vLength - v.Dot(w);
-                if (exeedtol_rel <= (eps_rel * vLength) || exeedtol_rel < eps_tot)
-                    break;
-
-                if (vLength < eps_rel2)  // it a null V
-                    break;
-
-                /* Add new vertex to simplex */
-                simplex[numVertsInSimplex] = w;
-                numVertsInSimplex++;
-
-                /* Invoke distance sub-algorithm */
-                if (numVertsInSimplex == 4) v = S3D(simplex, v, ref numVertsInSimplex);
-                else if (numVertsInSimplex == 3) v = S2D(simplex, v, ref numVertsInSimplex);
-                else if (numVertsInSimplex == 2) v = S1D(simplex, v, ref numVertsInSimplex);
-
-                /* Test */
-                for (int jj = 0; jj < numVertsInSimplex; jj++)
-                {
-                    double tesnorm = simplex[jj].LengthSquared();
-                    if (tesnorm > norm2Wmax)
+                simplex[count++] = support;
+                closest = ClosestPoint(simplex[..count], weights);
+                var reducedCount = 0;
+                for (var i = 0; i < count; i++)
+                    if (weights[i] > 0)
                     {
-                        norm2Wmax = tesnorm;
+                        simplex[reducedCount] = simplex[i];
+                        weights[reducedCount++] = weights[i];
                     }
-                }
-                vLength = v.LengthSquared();
-
-                if (vLength <= (eps_tot * eps_tot * norm2Wmax))
-                    break;
-
-            } while (numVertsInSimplex != 4 && k != 25);
-
-            Debug.WriteLineIf(k == mk, "\n * * * * * * * * * * * * MAXIMUM ITERATION NUMBER REACHED!!!  "
-                + " * * * * * * * * * * * * * * \n");
-            v = -v;
-            return Math.Sqrt(vLength);
+                count = reducedCount;
+            }
+            return Failure("GJK reached its iteration limit.", options.MaxGjkIterations, 0);
         }
 
-        private static Vector3 S3D(Vector3[] s, Vector3 v, ref int nvrtx)
+        private static Vector3[] Snapshot<T>(IList<T> points, string name) where T : IVector3D
         {
-            int i, j, k, t;
-            var s1 = s[3];
-            var s2 = s[2];
-            var s3 = s[1];
-            var s4 = s[0];
-            var s1s2 = s2 - s[3];
-            var s1s3 = s3 - s[3];
-            var s1s4 = s4 - s[3];
-
-            var hff1_tests = new bool[3];
-            hff1_tests[2] = hff1(s1, s2);
-            hff1_tests[1] = hff1(s1, s3);
-            hff1_tests[0] = hff1(s1, s4);
-            var testLineThree = hff1(s1, s3);
-            var testLineFour = hff1(s1, s4);
-
-            var dotTotal = 0;
-            if (hff1(s1, s2)) dotTotal++;
-            if (testLineThree) dotTotal++;
-            if (testLineFour) dotTotal++;
-            if (dotTotal == 0)
-            { /* case 0.0 -------------------------------------- */
-                v = s1;
-                nvrtx = 1; s[0] = s1;
-                return v;
-            }
-
-            var det134 = determinant(s1s3, s1s4, s1s2);
-            var sss = det134 <= 0;
-
-            var testPlaneTwo = hff3(s1, s3, s4) != sss;
-            var testPlaneThree = hff3(s1, s4, s2) != sss;
-            var testPlaneFour = hff3(s1, s2, s3) != sss;
-
-            if (testPlaneTwo && testPlaneThree && testPlaneFour)
+            if (points == null) throw new ArgumentNullException(name);
+            if (points.Count == 0) throw new ArgumentException("A convex hull needs at least one point.", name);
+            var snapshot = new Vector3[points.Count];
+            for (var i = 0; i < points.Count; i++)
             {
-                nvrtx = 4;
-                return Vector3.Zero;
+                var p = points[i];
+                if (p is null || !double.IsFinite(p.X) || !double.IsFinite(p.Y) || !double.IsFinite(p.Z))
+                    throw new ArgumentException("All hull points must have finite coordinates.", name);
+                snapshot[i] = new Vector3(p.X, p.Y, p.Z);
             }
-            else if (!testPlaneTwo && testPlaneThree && testPlaneFour)
-            {
-                nvrtx = 3;
-                s[2] = s[3];
-                return S2D(s, v, ref nvrtx);
-            }
-            else if (testPlaneTwo && !testPlaneThree && testPlaneFour)
-            {
-                nvrtx = 3;
-                s[1] = s2;
-                s[2] = s[3];
-                return S2D(s, v, ref nvrtx);
-            }
-            else if (testPlaneTwo && testPlaneThree && !testPlaneFour)
-            {
-                nvrtx = 3;
-                s[0] = s3;
-                s[1] = s2;
-                s[2] = s[3];
-                return S2D(s, v, ref nvrtx);
-            }
-            else if (testPlaneTwo || testPlaneThree || testPlaneFour)
-            {
-                // Two triangles face the origins:
-                //    The only positive hff3 is for triangle 1,i,j, therefore k must be in
-                //    the solution as it supports the the point of minimum norm.
-
-                // 1,i,j, are the indices of the points on the triangle and remove k from
-                // simplex
-                nvrtx = 3;
-                if (testPlaneTwo && !testPlaneThree && !testPlaneFour)
-                {
-                    k = 2; // s2
-                    i = 1;
-                    j = 0;
-                }
-                else if (!testPlaneTwo && testPlaneThree && !testPlaneFour)
-                {
-                    k = 1; // s3
-                    i = 0;
-                    j = 2;
-                }
-                else //if (!testPlaneTwo && !testPlaneThree && testPlaneFour)
-                {
-                    k = 0; // s4
-                    i = 2;
-                    j = 1;
-                }
-                var si = s[i];
-                var sj = s[j];
-                var sk = s[k];
-                if (dotTotal == 1)
-                {
-                    if (hff1_tests[k])
-                    {
-                        if (!hff2(s1, sk, si))
-                        {
-                            nvrtx = 3;
-                            s[2] = s[3]; s[1] = si; s[0] = sk;
-                            return projectOnPlane(s1, si, sk, v);
-                        }
-                        else if (!hff2(s1, sk, sj))
-                        {
-                            nvrtx = 3;
-                            s[2] = s[3]; s[1] = sj; s[0] = sk;
-                            return projectOnPlane(s1, sj, sk, v);
-                        }
-                        else
-                        {
-                            nvrtx = 2;
-                            s[1] = s[3]; s[0] = sk;
-                            return projectOnLine(s1, sk, v);
-                        }
-                    }
-                    else if (hff1_tests[i])
-                    {
-                        if (!hff2(s1, si, sk))
-                        {
-                            nvrtx = 3;
-                            s[2] = s[3]; s[1] = si; s[0] = sk;
-                            return projectOnPlane(s1, si, sk, v);
-                        }
-                        else
-                        {
-                            nvrtx = 2;
-                            s[1] = s[3]; s[0] = si;
-                            return projectOnLine(s1, si, v);
-                        }
-                    }
-                    else
-                    {
-                        if (!hff2(s1, sj, sk))
-                        {
-                            nvrtx = 3; s[2] = s[3]; s[1] = sj; s[0] = sk;
-                            return projectOnPlane(s1, sj, sk, v);
-                        }
-                        else
-                        {
-                            nvrtx = 2; s[1] = s[3]; s[0] = sj;
-                            return projectOnLine(s1, sj, v);
-                        }
-                    }
-                }
-                else if (dotTotal == 2)
-                {
-                    // Two edges have positive hff1, meaning that for two edges the origin's
-                    // project fall on the segement.
-                    //  Certainly the edge 1,k supports the the point of minimum norm, and so
-                    //  hff1_1k is positive
-
-                    if (hff1_tests[i])
-                    {
-                        if (!hff2(s1, sk, si))
-                        {
-                            if (!hff2(s1, si, sk))
-                            {
-                                nvrtx = 3; s[2] = s[3]; s[1] = si; s[0] = sk;
-                                return projectOnPlane(s1, si, sk, v);
-                            }
-                            else
-                            {
-                                nvrtx = 2; s[1] = s[3]; s[0] = sk;
-                                return projectOnLine(s1, sk, v);
-                            }
-                        }
-                        else
-                        {
-                            if (!hff2(s1, sk, sj))
-                            {
-                                nvrtx = 3; s[2] = s[3]; s[1] = sj; s[0] = sk;
-                                return projectOnPlane(s1, sj, sk, v);
-                            }
-                            else
-                            {
-                                nvrtx = 2; s[1] = s[3]; s[0] = sk;
-                                return projectOnLine(s1, sk, v);
-                            }
-                        }
-                    }
-                    else if (hff1_tests[j])
-                    { //  there is no other choice
-                        if (!hff2(s1, sk, sj))
-                        {
-                            if (!hff2(s1, sj, sk))
-                            {
-                                nvrtx = 3; s[2] = s[3]; s[1] = sj; s[0] = sk;
-                                return projectOnPlane(s1, sj, sk, v);
-                            }
-                            else
-                            {
-                                nvrtx = 2; s[1] = s[3]; s[0] = sj;
-                                return projectOnLine(s1, sj, v);
-                            }
-                        }
-                        else
-                        {
-                            if (!hff2(s1, sk, si))
-                            {
-                                nvrtx = 3; s[2] = s[3]; s[1] = si; s[0] = sk;
-                                return projectOnPlane(s1, si, sk, v);
-                            }
-                            else
-                            {
-                                nvrtx = 2; s[1] = s[3]; s[0] = sk;
-                                return projectOnLine(s1, sk, v);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // ERROR;
-                    }
-
-                }
-                else if (dotTotal == 3)
-                {
-                    // MM : ALL THIS HYPHOTESIS IS FALSE
-                    // sk is s.t. hff3 for sk < 0. So, sk must support the origin because
-                    // there are 2 triangles facing the origin.
-
-                    var hff2_ik = hff2(s1, si, sk);
-                    var hff2_jk = hff2(s1, sj, sk);
-                    var hff2_ki = hff2(s1, sk, si);
-                    var hff2_kj = hff2(s1, sk, sj);
-
-                    if (!hff2_ki && !hff2_kj)
-                    {
-                        Debug.WriteLine("\n\n UNEXPECTED VALUES!!! \n\n");
-                    }
-                    if (hff2_ki && hff2_kj)
-                    {
-                        nvrtx = 2; s[1] = s[3]; s[0] = sk;
-                        return projectOnLine(s1, sk, v);
-                    }
-                    else if (hff2_ki)
-                    {
-                        // discard i
-                        if (hff2_jk)
-                        {
-                            // discard k
-                            nvrtx = 2; s[1] = s[3]; s[0] = sj;
-                            return projectOnLine(s1, sj, v);
-                        }
-                        else
-                        {
-                            nvrtx = 3; s[2] = s[3]; s[1] = sj; s[0] = sk;
-                            return projectOnPlane(s1, sk, sj, v);
-                        }
-                    }
-                    else
-                    {
-                        // discard j
-                        if (hff2_ik)
-                        {
-                            nvrtx = 2; s[1] = s[3]; s[0] = si;
-                            return projectOnLine(s1, si, v);
-                        }
-                        else
-                        {
-                            nvrtx = 3; s[2] = s[3]; s[1] = si; s[0] = sk;
-                            return projectOnPlane(s1, sk, si, v);
-                        }
-                    }
-                }
-            }
-            else //if (!testPlaneTwo && !testPlaneThree && !testPlaneFour)
-            {
-                // The origin is outside all 3 triangles
-                if (dotTotal == 1)
-                {
-                    // Here si is set such that hff(s1,si) > 0
-                    if (testLineThree)
-                    {
-                        k = 2;
-                        i = 1; // s3
-                        j = 0;
-                    }
-                    else if (testLineFour)
-                    {
-                        k = 1; // s3
-                        i = 0;
-                        j = 2;
-                    }
-                    else
-                    {
-                        k = 0;
-                        i = 2; // s2
-                        j = 1;
-                    }
-                    var si = s[i];
-                    var sj = s[j];
-                    var sk = s[k];
-
-                    if (!hff2(s1, si, sj))
-                    {
-                        nvrtx = 3; s[2] = s[3]; s[1] = si; s[0] = sj;
-                        return projectOnPlane(s1, si, sj, v);
-                    }
-                    else if (!hff2(s1, si, sk))
-                    {
-                        nvrtx = 3; s[2] = s[3]; s[1] = si; s[0] = sk;
-                        return projectOnPlane(s1, si, sk, v);
-                    }
-                    else
-                    {
-                        nvrtx = 2; s[1] = s[3]; s[0] = si;
-                        return projectOnLine(s1, si, v);
-                    }
-                }
-                else if (dotTotal == 2)
-                {
-                    // Here si is set such that hff(s1,si) < 0
-                    nvrtx = 3;
-                    if (!testLineThree)
-                    {
-                        k = 2;
-                        i = 1; // s3
-                        j = 0;
-                    }
-                    else if (!testLineFour)
-                    {
-                        k = 1;
-                        i = 0; // s4
-                        j = 2;
-                    }
-                    else
-                    {
-                        k = 0;
-                        i = 2; // s2
-                        j = 1;
-                    }
-                    var si = s[i];
-                    var sj = s[j];
-                    var sk = s[k];
-
-                    if (!hff2(s1, sj, sk))
-                    {
-                        if (!hff2(s1, sk, sj))
-                        {
-                            nvrtx = 3; s[2] = s[3]; s[1] = sj; s[0] = sk;
-                            return projectOnPlane(s1, sj, sk, v);
-                        }
-                        else if (!hff2(s1, sk, si))
-                        {
-                            nvrtx = 3; s[2] = s[3]; s[1] = si; s[0] = sk;
-                            return projectOnPlane(s1, sk, si, v);
-                        }
-                        else
-                        {
-                            nvrtx = 2; s[1] = s[3]; s[0] = sk;
-                            return projectOnLine(s1, sk, v);
-                        }
-                    }
-                    else if (!hff2(s1, sj, si))
-                    {
-                        nvrtx = 3; s[2] = s[3]; s[1] = si; s[0] = sj;
-                        return projectOnPlane(s1, si, sj, v);
-                    }
-                    else
-                    {
-                        nvrtx = 2; s[1] = s[3]; s[0] = sj;
-                        return projectOnLine(s1, sj, v);
-                    }
-                }
-            }
-            throw new Exception("This should never happen");
+            return snapshot;
         }
 
-        private static double determinant(Vector3 p, Vector3 q, Vector3 r)
+        private readonly struct SupportVertex
         {
-            return p.X * ((q.Y * r.Z) - (r.Y * q.Z)) - p.Y * (q.X * r.Z - r.X * q.Z)
-                + p.Z * (q.X * r.Y - r.X * q.Y);
+            internal readonly Vector3 Difference;
+            internal readonly int First, Second;
+            internal SupportVertex(Vector3 difference, int first, int second)
+            { Difference = difference; First = first; Second = second; }
         }
 
-        private static Vector3 S2D(Vector3[] s, Vector3 v, ref int nvrtx)
+        private static bool Contains(ReadOnlySpan<SupportVertex> points, SupportVertex point)
         {
-            var s1p = s[2];
-            var s2p = s[1];
-            var s3p = s[0];
-            var hff1f_s12 = hff1(s1p, s2p);
-            var hff1f_s13 = hff1(s1p, s3p);
+            foreach (var p in points)
+                if ((p.First == point.First && p.Second == point.Second)
+                    || (p.Difference - point.Difference).LengthSquared() <= RoundoffTolerance * RoundoffTolerance)
+                    return true;
+            return false;
+        }
 
-            if (hff1f_s12)
+        // Enumerate at most 15 subsets so reduction and barycentric bookkeeping share one contract.
+        // Singular subsets are skipped; their edges and vertices are considered separately.
+        private static Vector3 ClosestPoint(ReadOnlySpan<SupportVertex> simplex, Span<double> weights)
+        {
+            var best = Vector3.Zero;
+            var bestSquared = double.PositiveInfinity;
+            Span<int> indices = stackalloc int[4];
+            Span<double> candidate = stackalloc double[4];
+            weights.Clear();
+            for (var mask = 1; mask < (1 << simplex.Length); mask++)
             {
-                var hff2f_23 = !hff2(s1p, s2p, s3p);
-                if (hff2f_23)
+                var count = 0;
+                for (var i = 0; i < simplex.Length; i++)
+                    if ((mask & (1 << i)) != 0) indices[count++] = i;
+                candidate.Clear();
+                if (!ProjectOrigin(simplex, indices[..count], candidate)) continue;
+                var sum = 0.0;
+                var valid = true;
+                for (var i = 0; i < count; i++)
                 {
-                    if (hff1f_s13)
+                    if (candidate[i] < -RoundoffTolerance || !double.IsFinite(candidate[i])) { valid = false; break; }
+                    candidate[i] = Math.Max(0, candidate[i]);
+                    sum += candidate[i];
+                }
+                if (!valid || sum == 0) continue;
+                var point = Vector3.Zero;
+                for (var i = 0; i < count; i++)
+                {
+                    candidate[i] /= sum;
+                    point += candidate[i] * simplex[indices[i]].Difference;
+                }
+                // The triangle's normal gives a projection without cancellation of large
+                // tangential coordinates. Its barycentric reconstruction still defines witnesses.
+                if (count == 3 && candidate[0] > 0 && candidate[1] > 0 && candidate[2] > 0)
+                {
+                    var a = simplex[indices[0]].Difference;
+                    var n = (simplex[indices[1]].Difference - a).Cross(simplex[indices[2]].Difference - a);
+                    point = n * (a.Dot(n) / n.LengthSquared());
+                }
+                else if (count == 4 && candidate[0] > 0 && candidate[1] > 0 && candidate[2] > 0 && candidate[3] > 0)
+                    point = Vector3.Zero;
+                var squared = point.LengthSquared();
+                if (squared >= bestSquared) continue;
+                best = point;
+                bestSquared = squared;
+                weights.Clear();
+                for (var i = 0; i < count; i++) weights[indices[i]] = candidate[i];
+            }
+            return best;
+        }
+
+        private static bool ProjectOrigin(ReadOnlySpan<SupportVertex> simplex, ReadOnlySpan<int> indices,
+            Span<double> weights)
+        {
+            var a = simplex[indices[0]].Difference;
+            weights[0] = 1;
+            if (indices.Length == 1) return true;
+            var ab = simplex[indices[1]].Difference - a;
+            var abSquared = ab.LengthSquared();
+            if (abSquared == 0) return false;
+            if (indices.Length == 2)
+            {
+                weights[1] = -a.Dot(ab) / abSquared;
+                weights[0] = 1 - weights[1];
+                return true;
+            }
+            var ac = simplex[indices[2]].Difference - a;
+            var normal = ab.Cross(ac);
+            var normalSquared = normal.LengthSquared();
+            if (normalSquared <= RoundoffTolerance * RoundoffTolerance * abSquared * ac.LengthSquared()) return false;
+            if (indices.Length == 3)
+            {
+                weights[1] = (-a).Cross(ac).Dot(normal) / normalSquared;
+                weights[2] = ab.Cross(-a).Dot(normal) / normalSquared;
+                weights[0] = 1 - weights[1] - weights[2];
+                return true;
+            }
+            var ad = simplex[indices[3]].Difference - a;
+            var determinant = normal.Dot(ad);
+            if (Math.Abs(determinant) <= RoundoffTolerance * Math.Sqrt(normalSquared * ad.LengthSquared())) return false;
+            weights[1] = (-a).Dot(ac.Cross(ad)) / determinant;
+            weights[2] = ab.Dot((-a).Cross(ad)) / determinant;
+            weights[3] = normal.Dot(-a) / determinant;
+            weights[0] = 1 - weights[1] - weights[2] - weights[3];
+            return true;
+        }
+
+        private static ConvexHullDistanceResult Failure(string reason, int gjkIterations, int epaIterations)
+            => new ConvexHullDistanceResult(double.NaN, Vector3.Zero, null, null,
+                ConvexHullDistanceStatus.Failed, gjkIterations, epaIterations, reason);
+
+        private sealed class DistanceQuery
+        {
+            internal readonly ConvexHullDistanceOptions Options;
+            internal readonly double Scale, Tolerance;
+            private readonly Vector3[] first, second, normalizedFirst, normalizedSecond;
+
+            internal DistanceQuery(Vector3[] first, Vector3[] second, ConvexHullDistanceOptions options)
+            {
+                this.first = first;
+                this.second = second;
+                Options = options;
+                var origin = first[0];
+                normalizedFirst = new Vector3[first.Length];
+                normalizedSecond = new Vector3[second.Length];
+                Scale = 0;
+                foreach (var p in first) Scale = Math.Max(Scale, MaxCoordinate(p - origin));
+                foreach (var p in second) Scale = Math.Max(Scale, MaxCoordinate(p - origin));
+                if (!double.IsFinite(Scale))
+                    throw new ArgumentException("The coordinate range is too large for a distance query.");
+                if (Scale == 0) Scale = 1;
+                for (var i = 0; i < first.Length; i++) normalizedFirst[i] = (first[i] - origin) / Scale;
+                for (var i = 0; i < second.Length; i++) normalizedSecond[i] = (second[i] - origin) / Scale;
+                Tolerance = Math.Max(RoundoffTolerance, options.AbsoluteTolerance / Scale + options.RelativeTolerance);
+            }
+
+            private static double MaxCoordinate(Vector3 v) => Math.Max(Math.Abs(v.X), Math.Max(Math.Abs(v.Y), Math.Abs(v.Z)));
+
+            internal SupportVertex Support(Vector3 direction)
+            {
+                var i = SupportIndex(normalizedFirst, direction);
+                var j = SupportIndex(normalizedSecond, -direction);
+                return new SupportVertex(normalizedFirst[i] - normalizedSecond[j], i, j);
+            }
+
+            private static int SupportIndex(Vector3[] points, Vector3 direction)
+            {
+                var best = 0;
+                var max = points[0].Dot(direction);
+                for (var i = 1; i < points.Length; i++)
+                {
+                    var dot = points[i].Dot(direction);
+                    if (dot > max) { max = dot; best = i; }
+                }
+                return best;
+            }
+
+            internal ConvexHullDistanceResult Result(ReadOnlySpan<SupportVertex> simplex, ReadOnlySpan<double> weights,
+                bool penetration, int gjkIterations, int epaIterations, Vector3 surfaceNormal = default)
+            {
+                // A numerically flat tetrahedron can contain the origin even though its height is
+                // below the roundoff floor. Return its closest boundary triangle, never four source
+                // vertices for an interior witness. This path is only used for tolerance contact.
+                if (simplex.Length == 4)
+                {
+                    Span<SupportVertex> triangle = stackalloc SupportVertex[3];
+                    Span<SupportVertex> bestTriangle = stackalloc SupportVertex[3];
+                    Span<double> triangleWeights = stackalloc double[3];
+                    Span<double> bestWeights = stackalloc double[3];
+                    var bestSquared = double.PositiveInfinity;
+                    for (var omitted = 0; omitted < 4; omitted++)
                     {
-                        var hff2f_32 = !hff2(s1p, s3p, s2p);
-                        if (hff2f_32)
-                        {
-                            return projectOnPlane(s1p, s2p, s3p, v); // Update s, no need to update c
-                                                                     // Return V{1,2,3}
-                        }
-                        else
-                        {
-                            nvrtx = 2;
-                            s[1] = s[2];
-                            return projectOnLine(s1p, s3p, v);
-                        }
+                        var count = 0;
+                        for (var i = 0; i < 4; i++)
+                            if (i != omitted) triangle[count++] = simplex[i];
+                        var closest = ClosestPoint(triangle, triangleWeights);
+                        var squared = closest.LengthSquared();
+                        if (squared >= bestSquared) continue;
+                        bestSquared = squared;
+                        triangle.CopyTo(bestTriangle);
+                        triangleWeights.CopyTo(bestWeights);
                     }
-                    else
-                    {
-                        return projectOnPlane(s1p, s2p, s3p, v); // Update s, no need to update c
-                                                                 // Return V{1,2,3}
-                    }
+                    if (bestSquared > Tolerance * Tolerance)
+                        return Failure("A contact simplex could not be reduced to a surface witness.", gjkIterations, epaIterations);
+                    return Result(bestTriangle, bestWeights, penetration, gjkIterations, epaIterations, surfaceNormal);
                 }
-                else
-                {
-                    nvrtx = 2; s[0] = s[2];
-                    return projectOnLine(s1p, s2p, v); // Update v
-                }
+                var difference = Vector3.Zero;
+                for (var i = 0; i < simplex.Length; i++) difference += weights[i] * simplex[i].Difference;
+                var distance = difference.Length();
+                var touching = distance <= Tolerance;
+                var normal = surfaceNormal.LengthSquared() > 0 ? surfaceNormal
+                    : touching ? Vector3.Zero : (penetration ? difference / distance : -difference / distance);
+                return new ConvexHullDistanceResult(touching ? 0 : (penetration ? -distance : distance) * Scale,
+                    normal, Witness(first, simplex, weights, true), Witness(second, simplex, weights, false),
+                    touching ? ConvexHullDistanceStatus.Touching : penetration ? ConvexHullDistanceStatus.Penetrating
+                    : ConvexHullDistanceStatus.Separated, gjkIterations, epaIterations, null);
             }
-            else if (hff1f_s13)
+
+            private static ConvexHullWitness Witness(Vector3[] points, ReadOnlySpan<SupportVertex> simplex,
+                ReadOnlySpan<double> weights, bool firstHull)
             {
-                var hff2f_32 = !hff2(s1p, s3p, s2p);
-                if (hff2f_32)
+                var indices = new List<int>(3);
+                var combinedWeights = new List<double>(3);
+                for (var i = 0; i < simplex.Length; i++)
                 {
-                    return projectOnPlane(s1p, s2p, s3p, v); // Update s, no need to update v
-                                                             // Return V{1,2,3}
+                    if (weights[i] <= 0) continue;
+                    var index = firstHull ? simplex[i].First : simplex[i].Second;
+                    var existing = indices.IndexOf(index);
+                    if (existing < 0) { indices.Add(index); combinedWeights.Add(weights[i]); }
+                    else combinedWeights[existing] += weights[i];
                 }
-                else
-                {
-                    nvrtx = 2;
-                    s[1] = s[2];
-                    return projectOnLine(s1p, s3p, v);
-                }
-            }
-            else
-            {
-                v = s[2];
-                nvrtx = 1;
-                s[0] = s[2];
-                return v;       // Return V{1}
-            }
-
-        }
-
-
-        private static Vector3 projectOnPlane(Vector3 p, Vector3 q, Vector3 r, Vector3 v)
-        {
-            var pq = p - q;
-            var pr = p - r;
-            var n = pq.Cross(pr);
-            var tmp = n.Dot(p) / n.Dot(n);
-            return tmp * n;
-        }
-
-        private static T support<T>(IList<T> vertices, T thisS, Vector3 v) where T : IVector3D
-        {
-            int better = -1;
-
-            var maxs = thisS.Dot(v);
-
-            for (int i = 0; i < vertices.Count; ++i)
-            {
-                var vrt = vertices[i];
-                var ss1 = vrt.Dot(v);
-                if (ss1 > maxs)
-                {
-                    maxs = ss1;
-                    better = i;
-                }
-            }
-            if (better >= 0)
-                return vertices[better];
-            else return thisS;
-        }
-        private static Vector3 S1D(Vector3[] s, Vector3 v, ref int nvrtx)
-        {
-            var s1p = s[1];
-            var s2p = s[0];
-
-            if (hff1(s1p, s2p))
-                return projectOnLine(s1p, s2p, v); // Update v, no need to update s
-            else
-            {
-                s[0] = s[1];    // Update v and s
-                nvrtx = 1;
-                return s[0];
+                // Reconstruct relative to a source vertex to avoid summing large world coordinates.
+                var origin = points[indices[0]];
+                var point = origin;
+                for (var i = 1; i < indices.Count; i++) point += combinedWeights[i] * (points[indices[i]] - origin);
+                return new ConvexHullWitness(point, indices.ToArray(), combinedWeights.ToArray());
             }
         }
-
-        private static Vector3 projectOnLine(Vector3 p, Vector3 q, Vector3 v)
-        {
-            var pq = p - q;
-
-            var tmp = p.Dot(pq) / pq.Dot(pq);
-            return p - tmp * pq;
-        }
-
-        private static bool hff1(Vector3 p, Vector3 q)
-        {
-            return (p.X * p.X - p.X * q.X) + (p.Y * p.Y - p.Y * q.Y) + (p.Z * p.Z - p.Z * q.Z) > 0;
-        }
-
-        private static bool hff2(Vector3 p, Vector3 q, Vector3 r)
-        {
-            var pq = q - p;
-            var pr = r - p;
-            var ntmp = pq.Cross(pr);
-            var n = pq.Cross(ntmp);
-
-
-            return p.Dot(n) < 0;
-        }
-
-        private static bool hff3(Vector3 p, Vector3 q, Vector3 r)
-        {
-            var pq = q - p;
-            var pr = r - p;
-            var n = pq.Cross(pr);
-            return p.Dot(n) <= 0; // discard s if true
-        }
-
     }
 }

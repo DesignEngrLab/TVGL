@@ -128,19 +128,14 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Returns true if the two convex hulls overlap (basically if a vertex of one
-        /// is inside the other).
+        /// Returns true if the convex hulls intersect or touch within the default GJK/EPA tolerance.
         /// </summary>
-        /// <param name="other"></param>
-        /// <param name="offset"></param>
-        /// <returns></returns>
-        public bool Overlaps(ConvexHull3D other, double offset = 0)
+        /// <param name="other">The other convex hull.</param>
+        /// <returns>True for penetration or tolerance contact, including containment.</returns>
+        /// <exception cref="System.InvalidOperationException">The distance solver did not converge.</exception>
+        public bool Overlaps(ConvexHull3D other)
         {
-            foreach (var face in Faces)
-                if (!other.IsInside(face.A.Coordinates, offset)) return false;
-            foreach (var face in other.Faces)
-                if (!IsInside(face.A.Coordinates, offset)) return false;
-            return true;
+            return Vertices.DistanceBetween(other.Vertices, out _) <= 0;
         }
 
         /// <summary>
