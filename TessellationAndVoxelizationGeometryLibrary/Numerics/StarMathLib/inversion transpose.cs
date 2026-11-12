@@ -1,4 +1,4 @@
-﻿// ***********************************************************************
+// ***********************************************************************
 // Assembly         : StarMath
 // Author           : MICampbell
 // Created          : 05-14-2015
@@ -44,6 +44,31 @@ namespace StarMathLib
         }
 
         /// <summary>
+        /// Attempts to invert a square matrix without changing it.
+        /// </summary>
+        /// <param name="A">The matrix to invert.</param>
+        /// <param name="inverse">The inverse on success; null on failure.</param>
+        /// <returns>False if a zero pivot or non-finite intermediate or result is encountered.
+        /// A successful result does not guarantee that the matrix is well-conditioned.</returns>
+        /// <exception cref="ArgumentNullException">A is null.</exception>
+        /// <exception cref="ArithmeticException">A is not square.</exception>
+        public static bool TryInverse(this double[,] A, out double[,] inverse)
+        {
+            if (A == null) throw new ArgumentNullException(nameof(A));
+            var length = A.GetLength(0);
+            if (length != A.GetLength(1))
+                throw new ArithmeticException("Matrix cannot be inverted. Can only invert square matrices.");
+            inverse = null;
+            if (!TryLUDecomposition(A, out var lu, out var permutation, out _, length))
+                return false;
+            var result = inverseWithLUResult(lu, permutation, length);
+            foreach (var value in result)
+                if (!double.IsFinite(value)) return false;
+            inverse = result;
+            return true;
+        }
+
+        /// <summary>
         /// Inverses the matrix A only if the diagonal is all non-zero.
         /// A[i,i] != 0.0
         /// </summary>
@@ -67,76 +92,27 @@ namespace StarMathLib
         /// <param name="permute">The permute.</param>
         /// <param name="length">The length.</param>
         /// <returns>System.Double[].</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static double[,] inverseWithLUResult(double[,] B, int[] permute, int length)
+        private static double[,] inverseWithLUResult(double[,] lu, int[] permute, int length)
         {
-            // if the matrix is not square or is less than B 2x2, 
-            // then this function won't work
-            //todo: need to fix to take care of permute
-            #region invert L
-
-            for (var i = 0; i < length; i++)
+            var inverse = new double[length, length];
+            var x = new double[length];
+            for (var column = 0; column < length; column++)
             {
-                B[permute[i], i] = 1.0 / B[permute[i], i];
-                for (var j = i + 1; j < length; j++)
+                // Solve L y = P e_column, followed by U x = y.
+                for (var i = 0; i < length; i++)
                 {
-                    var sum = 0.0;
-                    for (var k = i; k < j; k++)
-                        sum -= B[permute[j], k] * B[permute[k], i];
-                    B[permute[j], i] = (sum == 0) ? 0.0 : sum / B[permute[j], j];
+                    var row = permute[i];
+                    var value = row == column ? 1.0 : 0.0;
+                    for (var j = 0; j < i; j++) value -= lu[row, j] * x[j];
+                    x[i] = value / lu[row, i];
+                }
+                for (var i = length - 1; i >= 0; i--)
+                {
+                    for (var j = i + 1; j < length; j++) x[i] -= lu[permute[i], j] * x[j];
+                    inverse[i, column] = x[i];
                 }
             }
-
-            #endregion
-
-            #region invert U
-
-            for (var i = 0; i < length; i++)
-                for (var j = i + 1; j < length; j++)
-                {
-                    var sum = -B[permute[i], j];
-                    for (var k = i + 1; k < j; k++)
-                        sum -= B[permute[k], j] * B[permute[i], k];
-                    B[permute[i], j] = sum;
-                }
-
-            #endregion
-
-            #region final inversion
-
-            for (var i = 0; i < length; i++)
-                for (var j = 0; j < length; j++)
-                {
-                    if (j == i)
-                    {
-                        var sum = B[permute[i], i];
-                        for (var k = i + 1; k < length; k++)
-                            sum += B[permute[i], k] * B[permute[k], i];
-                        B[permute[i], i] = sum;
-                    }
-                    else if (j < i)
-                    {
-                        var sum = 0.0;
-                        for (var k = i; k < length; k++)
-                            sum += B[permute[j], k] * B[permute[k], i];
-                        B[permute[j], i] = sum;
-                    }
-                    else // then i<j
-                    {
-                        var sum = B[permute[j], i];
-                        for (var k = j + 1; k < length; k++)
-                            sum += B[permute[j], k] * B[permute[k], i];
-                        B[permute[j], i] = sum;
-                    }
-                }
-
-            #endregion
-
-            var C = new double[length, length];
-            for (int i = 0; i < length; i++)
-                for (int j = 0; j < length; j++)
-                    C[i, j] = B[i, permute[j]];
-            return C;
+            return inverse;
         }
 
         #endregion
@@ -144,20 +120,12 @@ namespace StarMathLib
         #region LU Decomposition
 
         /// <summary>
-        /// Returns the LU decomposition of A in a new matrix.
+        /// Factors A as L U, with rows stored in the original order and indexed by
+        /// permute. L contains the diagonal and U has a unit diagonal.
         /// </summary>
-        /// <param name="A">The matrix to invert. This matrix is unchanged by this function.</param>
-        /// <param name="L">The L matrix is output where the diagonal elements are included and not (necessarily) equal to one.</param>
-        /// <param name="U">The U matrix is output where the diagonal elements are all equal to one.</param>
-        /// <param name="permute">The permute.</param>
-        /// <exception cref="System.ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void LUDecomposition(double[,] A, out double[,] L, out double[,] U, out int[] permute)
         {
             var length = A.GetLength(0);
-            if (length != A.GetLength(1))
-                throw new ArithmeticException("LU Decomposition can only be determined for square matrices.");
-
             L = LUDecomposition(A, out permute, length);
             U = new double[length, length];
             for (var i = 0; i < length; i++)
@@ -172,226 +140,95 @@ namespace StarMathLib
         }
 
         /// <summary>
-        /// Returns the LU decomposition of A in a new matrix.
+        /// Crout factorization with partial pivoting. The packed factors retain the
+        /// original row locations; permutationVector maps factor rows to input rows.
         /// </summary>
-        /// <param name="A">The matrix to invert. This matrix is unchanged by this function.</param>
-        /// <param name="permutationVector">The resulting permutation vector - how the rows are re-ordered to
-        /// create L and U.</param>
-        /// <param name="length">The length/order/number of rows of matrix, A.</param>
-        /// <param name="robustReorder">if set to <c>true</c> [robust reorder]. But this is an internal recursive call
-        /// and should not be set outside.</param>
-        /// <param name="lastZeroIndices">The last zero indices - is calculated in this function, but if it is already
-        /// known, then...by all means.</param>
-        /// <returns>A matrix of equal size to A that combines the L and U. Here the diagonals belongs to L and the U's diagonal
-        /// elements are all 1.</returns>
-        /// <exception cref="System.ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static double[,] LUDecomposition(double[,] A, out int[] permutationVector, int length = -1,
-            bool robustReorder = false, List<int>[] lastZeroIndices = null)
+        private static double[,] LUDecomposition(double[,] A, out int[] permutationVector, int length = -1)
         {
-            // This is an implementation of Crout’s LU Decomposition Algorithm
-            if (length == -1) length = A.GetLength(0);
-            if (length != A.GetLength(1))
-                throw new ArithmeticException("LU Decomposition can only be determined for square matrices.");
-            // this lastZeroIndices is a an array of the last column index in each row that contains a zero (or is
-            // negligible. It is used to determine what other row to swap with, if the current row has a zero diagonal.
-            if (lastZeroIndices == null)
+            if (!TryLUDecomposition(A, out var result, out permutationVector, out var nonFinite, length))
             {
-                lastZeroIndices = new List<int>[length];
-                for (int i = 0; i < length; i++)
-                {
-                    lastZeroIndices[i] = new List<int>();
-                    for (int j = 0; j < length; j++)
-                        if (A[i, j].IsNegligible()) lastZeroIndices[i].Add(j);
-                }
+                if (nonFinite)
+                    throw new InvalidOperationException("LU decomposition encountered a non-finite value.");
+                throw new ArithmeticException("Matrix is singular; LU decomposition cannot be completed.");
             }
-            var B = (double[,])A.Clone();
-            // start with the permutation vector as a simple count - this is equivalent to an identity permutation matrix
-            permutationVector = Enumerable.Range(0, length).ToArray();
-            // normalize row 0
-            for (var i = 0; i < length; i++)
-            {
-                // call this function to see if a row swap is necessary. If robustReorder, then it is likely
-                // that a different row will be chosen even if this one is good. 
-                if (!findAndPivotRows(B, permutationVector, lastZeroIndices, i, length, robustReorder))
-                    // the reorder function only returns false, when robustReorder is false, and the simpler/quicker
-                    // approach did not work. So, the whole process is restarted with robustReorder set to true.
-                    // this will only recurse once (essentially just reducing duplicate code with this recursion.
-                    return LUDecomposition(A, out permutationVector, length, true, lastZeroIndices);
-
-                // continue with the main body of Crout's LU decomposition approach
-                var pI = permutationVector[i];
-                for (var j = i; j < length; j++)
-                {
-                    var pJ = permutationVector[j];
-                    // do a column of L
-                    var sum = 0.0;
-                    for (var k = 0; k < i; k++)
-                        sum -= B[pJ, k] * B[permutationVector[k], i];
-                    B[pJ, i] += sum;
-                }
-                for (var j = i + 1; j < length; j++)
-                {
-                    // do a row of U
-                    var sum = 0.0;
-                    for (var k = 0; k < i; k++)
-                        sum += B[pI, k] * B[permutationVector[k], j];
-                    B[pI, j] = (-sum + B[pI, j]) / B[pI, i];
-                }
-            }
-            return B;
+            return result;
         }
 
-        /// <summary>
-        /// Finds the and pivot rows.
-        /// </summary>
-        /// <param name="B">The b.</param>
-        /// <param name="permutationVector">The permutation vector.</param>
-        /// <param name="lastZeroIndices">The last zero indices.</param>
-        /// <param name="i">The i.</param>
-        /// <param name="length">The length.</param>
-        /// <param name="robustReorder">if set to <c>true</c> [robust reorder].</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        /// <exception cref="System.ArithmeticException">A appears to be a singular matrix. The LU Decomposition is not possible to complete.</exception>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool findAndPivotRows(double[,] B, int[] permutationVector, List<int>[] lastZeroIndices, int i,
-            int length, bool robustReorder = false)
+        private static bool TryLUDecomposition(double[,] A, out double[,] B, out int[] permutationVector,
+            out bool nonFinite, int length = -1)
         {
-            // if robustReorder is false, then this whole reorder process may be skipped if the diagonal is nonzero.
-            if (!robustReorder && !B[permutationVector[i], i].IsNegligible()) return true;
+            if (length == -1) length = A.GetLength(0);
+            if (length != A.GetLength(0) || length != A.GetLength(1))
+                throw new ArithmeticException("LU Decomposition can only be determined for square matrices.");
 
-            // the following 13 lines chose the subsequent row that has a nonzero candidate for this row's 
-            // diagonal and has the most zeroes that are farthest along in the row. This metric is essentially,
-            // (num of remaining zeroes in row)*(the average position of zeroes in this row). Multiplying these
-            // two results in simply summing the positions of the remaining zeroes in the row. So, for a pair of rows:
-            // [0 3 4 0 0 0 1 7]
-            // [6 4 3 9 0 0 4 0] 
-            // for the third position (i = 2), the first row would receive a score of 12 (3 + 4 + 5) while the second
-            // row would get a score of 16 (4 + 5 + 7). This would mean use the second row first!
-            // Is this a wacky idea? I'm not sure. It is all my own, but likely explored somewhere in the literature. 
-            // Such a heuristic is not uncommon. In lieu of search the n! ways to recombine the rows, this is a shortcut
-            // that seems to lead to some robustness. It is intended to be a quick way to avoid further problems in later row swaps.
-            var newI = -1;
-            var indexOfLargestSum = -1;
-            for (int j = i + 1; j < length; j++)
+            B = (double[,])A.Clone();
+            permutationVector = Enumerable.Range(0, length).ToArray();
+            nonFinite = false;
+            for (var i = 0; i < length; i++)
             {
-                if (!B[permutationVector[j], i].IsNegligible())
+                // Complete the current column of L before selecting its pivot.
+                var pivot = i;
+                var largest = 0.0;
+                for (var j = i; j < length; j++)
                 {
-                    var sumOfColumnsWhereZeroesExist = lastZeroIndices[permutationVector[j]].Sum(x => x > i ? x : 0);
-                    if (sumOfColumnsWhereZeroesExist >= indexOfLargestSum)
+                    var row = permutationVector[j];
+                    var value = B[row, i];
+                    for (var k = 0; k < i; k++)
+                        value -= B[row, k] * B[permutationVector[k], i];
+                    B[row, i] = value;
+                    if (!double.IsFinite(value))
                     {
-                        indexOfLargestSum = sumOfColumnsWhereZeroesExist;
-                        newI = j;
+                        nonFinite = true;
+                        return false;
+                    }
+                    if (Math.Abs(value) > largest)
+                    {
+                        largest = Math.Abs(value);
+                        pivot = j;
+                    }
+                }
+                if (largest == 0.0) return false;
+                (permutationVector[i], permutationVector[pivot]) = (permutationVector[pivot], permutationVector[i]);
+                var pivotRow = permutationVector[i];
+                for (var j = i + 1; j < length; j++)
+                {
+                    var value = B[pivotRow, j];
+                    for (var k = 0; k < i; k++)
+                        value -= B[pivotRow, k] * B[permutationVector[k], j];
+                    B[pivotRow, j] = value / B[pivotRow, i];
+                    if (!double.IsFinite(B[pivotRow, j]))
+                    {
+                        nonFinite = true;
+                        return false;
                     }
                 }
             }
-            if (newI == -1)
-            {   // if there was no change to newI, then we have failed for the non robust case. Return false, and let the 
-                // main LU decomp function start the robust approach
-                if (!robustReorder) return false;
-                // getting no change in newI for robustReorder is not necessarily a problem (it will happen in every
-                // last row) if the diagonal is nonnegligible. If it is - then we got a problem...
-                if (B[permutationVector[i], i].IsNegligible())
-                    throw new ArithmeticException(
-                        "A appears to be a singular matrix. The LU Decomposition is not possible to complete.");
-                return true;
-            }
-            var temp = permutationVector[i];
-            permutationVector[i] = permutationVector[newI];
-            permutationVector[newI] = temp;
             return true;
         }
 
-        /// <summary>
-        /// Returns the LU decomposition of A in a new matrix.
-        /// </summary>
-        /// <param name="A">The matrix to invert. This matrix is unchanged by this function.</param>
-        /// <param name="L">The L matrix is output where the diagonal elements are included and not (necessarily) equal to one.</param>
-        /// <param name="U">The U matrix is output where the diagonal elements are all equal to one.</param>
-        /// <param name="permute">The permute.</param>
-        /// <exception cref="System.ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        /// <summary>Factors an integer matrix using the same pivoting as the double overload.</summary>
         internal static void LUDecomposition(int[,] A, out double[,] L, out double[,] U, out int[] permute)
         {
             var length = A.GetLength(0);
             if (length != A.GetLength(1))
                 throw new ArithmeticException("LU Decomposition can only be determined for square matrices.");
-            L = LUDecomposition(A, out permute, length);
-            U = new double[length, length];
-            for (var i = 0; i < length; i++)
-            {
-                U[i, i] = 1.0;
-                for (var j = i + 1; j < length; j++)
-                {
-                    U[i, j] = L[i, j];
-                    L[i, j] = 0.0;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Returns the LU decomposition of A in a new matrix.
-        /// </summary>
-        /// <param name="A">The matrix to invert. This matrix is unchanged by this function.</param>
-        /// <param name="permutationVector">The resulting permutation vector - how the rows are re-ordered to
-        /// create L and U.</param>
-        /// <param name="length">The length/order/number of rows of matrix, A.</param>
-        /// <param name="robustReorder">if set to <c>true</c> [robust reorder]. But this is an internal recursive call
-        /// and should not be set outside.</param>
-        /// <param name="zeroIndices">The last zero indices - is calculated in this function, but if it is already
-        /// known, then...by all means.</param>
-        /// <returns>A matrix of equal size to A that combines the L and U. Here the diagonals belongs to L and the U's diagonal
-        /// elements are all 1.</returns>
-        /// <exception cref="System.ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static double[,] LUDecomposition(int[,] A, out int[] permutationVector, int length = -1,
-            bool robustReorder = false, List<int>[] zeroIndices = null)
-        {
-            // This is an implementation of Crout’s LU Decomposition Algorithm
-            if (length == -1) length = A.GetLength(0);
-            if (length != A.GetLength(1))
-                throw new ArithmeticException("LU Decomposition can only be determined for square matrices.");
-            if (zeroIndices == null)
-            {
-                zeroIndices = new List<int>[length];
-                for (int i = 0; i < length; i++)
-                {
-                    zeroIndices[i] = new List<int>();
-                    for (int j = 0; j < length; j++)
-                        if (A[i, j] == 0) zeroIndices[i].Add(j);
-                }
-            }
-            var B = new double[length, length];
+            var values = new double[length, length];
             for (var i = 0; i < length; i++)
                 for (var j = 0; j < length; j++)
-                    B[i, j] = A[i, j];
-            permutationVector = Enumerable.Range(0, length).ToArray();
-            // normalize row 0
-            for (var i = 0; i < length; i++)
-            {
-                if (!findAndPivotRows(B, permutationVector, zeroIndices, i, length, robustReorder))
-                    return LUDecomposition(A, out permutationVector, length, true, zeroIndices);
+                    values[i, j] = A[i, j];
+            LUDecomposition(values, out L, out U, out permute);
+        }
 
-                var pI = permutationVector[i];
-                for (var j = i; j < length; j++)
-                {
-                    var pJ = permutationVector[j];
-                    // do a column of L
-                    var sum = 0.0;
-                    for (var k = 0; k < i; k++)
-                        sum -= B[pJ, k] * B[permutationVector[k], i];
-                    B[pJ, i] += sum;
-                }
-                for (var j = i + 1; j < length; j++)
-                {
-                    // do a row of U
-                    var sum = 0.0;
-                    for (var k = 0; k < i; k++)
-                        sum += B[pI, k] * B[permutationVector[k], j];
-                    B[pI, j] = (-sum + B[pI, j]) / B[pI, i];
-                }
-            }
-            return B;
+        private static double[,] LUDecomposition(int[,] A, out int[] permutationVector, int length = -1)
+        {
+            if (length == -1) length = A.GetLength(0);
+            if (length != A.GetLength(0) || length != A.GetLength(1))
+                throw new ArithmeticException("LU Decomposition can only be determined for square matrices.");
+            var values = new double[length, length];
+            for (var i = 0; i < length; i++)
+                for (var j = 0; j < length; j++)
+                    values[i, j] = A[i, j];
+            return LUDecomposition(values, out permutationVector, length);
         }
 
         #endregion
@@ -665,16 +502,14 @@ namespace StarMathLib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static double determinantBig(double[,] A, int length)
         {
-            var L = LUDecomposition(A, out var permute, length);
-            var result = 1.0;
-            for (var i = 0; i < length; i++)
+            try
             {
-                if (double.IsNaN(L[permute[i], i]))
-                    return 0;
-                else result *= L[permute[i], i];
-                if (permute[i] != i) result *= -1;
+                var L = LUDecomposition(A, out var permute, length);
+                var result = PermutationSign(permute);
+                for (var i = 0; i < length; i++) result *= L[permute[i], i];
+                return result;
             }
-            return result;
+            catch (ArithmeticException) { return 0; }
         }
 
         /// <summary>
@@ -713,13 +548,23 @@ namespace StarMathLib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int determinantBig(int[,] A, int length)
         {
-            var L = LUDecomposition(A, out var permute, length);
-            var result = 1.0;
-            for (var i = 0; i < length; i++)
-                if (double.IsNaN(L[permute[i], i]))
-                    return 0;
-                else result *= L[permute[i], i];
-            return (int)result;
+            try
+            {
+                var L = LUDecomposition(A, out var permute, length);
+                double result = PermutationSign(permute);
+                for (var i = 0; i < length; i++) result *= L[permute[i], i];
+                return (int)Math.Round(result);
+            }
+            catch (ArithmeticException) { return 0; }
+        }
+
+        private static double PermutationSign(int[] permutation)
+        {
+            var sign = 1.0;
+            for (var i = 0; i < permutation.Length; i++)
+                for (var j = i + 1; j < permutation.Length; j++)
+                    if (permutation[i] > permutation[j]) sign = -sign;
+            return sign;
         }
 
         #endregion

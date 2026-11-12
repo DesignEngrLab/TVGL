@@ -19,14 +19,17 @@ using System.Reflection;
 
 namespace TVGL
 {
-    // Here are the set of misellaneous functions that optimize! find the closest point, the most
-    // orthogonal direction, etc.
-    /// <summary>
-    /// Class MiscFunctions.
-    /// </summary>
     public static class Develop3Dto2D
     {
-
+        /// <summary>
+        /// Creates the polygons that are drawn on the cylinder.
+        /// </summary>
+        /// <param name="cyl"></param>
+        /// <param name="polyon3Ds"></param>
+        /// <param name="defineSeam"></param>
+        /// <param name="vertexMapping"></param>
+        /// <param name="newVertexSpacing"></param>
+        /// <returns></returns>
         public static List<(Polygon polygon, int numRepeats, int indexMatchedToStart)> GetUnrolledPolygons
             (this Cylinder cyl, IEnumerable<Polygon3D> polyon3Ds, bool defineSeam,
             out Dictionary<Vector3, Vertex2D> vertexMapping, double newVertexSpacing = -1.0)
