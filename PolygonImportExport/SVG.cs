@@ -19,15 +19,19 @@ namespace PolygonImportExport
         /// <param name="curvePrecision">The number of line segments used to approximate each curve entity.</param>
         /// <param name="positiveYIsUp">When true (default), negates all Y values to convert from SVG's Y-down
         /// coordinate frame into a standard right-handed frame where positive Y points up.</param>
-        /// <returns>The imported closed polygons and open polylines.</returns>
+        /// <returns>The imported closed polygons and, when requested, open polylines.</returns>
         public static List<Polygon> Open(string filePath, int curvePrecision = 30, bool positiveYIsUp = true)
+            => Open(filePath, curvePrecision, positiveYIsUp, true);
+
+        /// <summary>Reads SVG geometry, optionally discarding open annotations before containment classification.</summary>
+        public static List<Polygon> Open(string filePath, int curvePrecision, bool positiveYIsUp, bool includeOpenPaths)
         {
             var result = new List<Polygon>();
             var doc = XDocument.Load(filePath);
             XNamespace ns = SvgNs;
 
-            // Collect all relevant elements anywhere in the document tree
-            var allElements = doc.Descendants();
+            // Resolve visibility before containment: hidden paths must never become outlines or holes.
+            var allElements = SvgVisibility.VisibleElements(doc);
 
             // path elements — primary shape carrier in SVG
             foreach (var el in allElements.Where(e => e.Name.LocalName == "path"))
@@ -98,7 +102,8 @@ namespace PolygonImportExport
                     result[idx] = new Polygon(flipped.AsEnumerable().Reverse(), isClosed: p.IsClosed);
                 }
             }
-            return ACadSharpConnector.OrganizeIntoShallowTree(result);
+            // Filter before containment analysis so bend annotations cannot become outer contours or holes.
+            return ACadSharpConnector.OrganizeIntoShallowTree(includeOpenPaths ? result : result.Where(p => p.IsClosed).ToList());
         }
 
         // <param name="positiveYIsUp">When true (default), negates all Y values to convert from a standard
