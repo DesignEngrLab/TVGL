@@ -144,14 +144,6 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Transforms the from 3d to 2d.
-        /// </summary>
-        /// <param name="point">The point.</param>
-        /// <returns>Vector2.</returns>
-        public override Vector2 TransformFrom3DTo2D(Vector3 point)
-            => TransformFrom3DTo2D([point]).First();
-
-        /// <summary>
         /// Rolls a point from a developed cone back onto the cone using the same seam direction that was used
         /// to develop it.
         /// </summary>
@@ -197,61 +189,6 @@ namespace TVGL
         private Vector3 SectorCenterDirection => -PerpXDir;
 
         private Vector3 SectorYDirection => Axis.Cross(SectorCenterDirection).Normalize();
-
-
-        /// <summary>
-        /// Develops an ordered path on the cone onto a plane without breaking the path when it crosses the
-        /// <see cref="Math.Atan2(double, double)"/> branch cut. Successive points are used to determine which
-        /// revolution of the developed cone each point belongs to, so the result can span any number of turns.
-        /// </summary>
-        /// <param name="points">The ordered points on the cone.</param>
-        /// <returns>The points on the developed (flattened) cone.</returns>
-        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
-        {
-            // Cut the cone to its center and lay it flat. A full 2*pi turn around the 3D
-            // cone occupies only 2*pi*sin(apertureAngle) radians in that flat sector. Instead of
-            // repeating every 2*pi like a cylinder, the sector repeats every 2*pi*sin(apertureAngle).
-            var repeatAngle = Math.Abs(sinAperture) * Math.Tau;
-            var halfRepeatAngle = 0.5 * repeatAngle;
-
-            // Atan2 returns only its principal angle, so the raw developed angle below always lies on the first
-            // copy of the sector. previousUnwrappedAngle remembers which repeated copy the path actually reached.
-            // It starts as NaN because the first point establishes the arbitrary starting revolution.
-            var previousUnwrappedAngle = double.NaN;
-            foreach (var pt in points)
-            {
-                // In the developed cone, distance from the apex is the slant distance. Developing the cone is an
-                // isometry, so this radial coordinate is simply the length of the 3D apex-to-point vector.
-                var pointOnCone = ClosestPointOnSurfaceToPoint(pt);
-                var v = pointOnCone - Apex;
-                var distanceDownCone = v.Length();
-                // Find the point's azimuth around the 3D cone. Multiplying that azimuth by sinAperture compresses
-                // one full 3D revolution into the angular width of the developed sector described above.
-                var x = SectorCenterDirection.Dot(v);
-                var y = SectorYDirection.Dot(v);
-                var unwrappedAngle = Math.Atan2(y, x) * sinAperture; // recall that Atan2 returns -pi to +pi,
-                                                                     // sinAperture attenuates this so that a gap
-                                                                     // or seam is left...centered at 180 degrees
-                if (!double.IsNaN(previousUnwrappedAngle))
-                {
-                    // Select the equivalent angle on the repeated sector that is closest to the preceding point.
-                    // Crossing the Atan2 seam makes the raw angle jump by one repeatAngle; these loops remove that
-                    // artificial jump. They deliberately use "while", rather than "if": after several turns the
-                    // previous angle can be several repeated sectors away from the principal Atan2 result.
-                    while (unwrappedAngle - previousUnwrappedAngle > halfRepeatAngle)
-                        unwrappedAngle -= repeatAngle;
-                    while (previousUnwrappedAngle - unwrappedAngle > halfRepeatAngle)
-                        unwrappedAngle += repeatAngle;
-                }
-                // Convert the unwrapped polar coordinates to ordinary Cartesian coordinates in the flat plane.
-                // As with any sampled angular path, this assumes adjacent points are less than half a revolution
-                // apart; otherwise the intended direction between those two samples is inherently ambiguous.
-                yield return new Vector2(distanceDownCone * Math.Cos(unwrappedAngle),
-                    distanceDownCone * Math.Sin(unwrappedAngle));
-                previousUnwrappedAngle = unwrappedAngle;
-            }
-        }
-
 
         /// <summary>
         /// Gets the normal at point.
@@ -374,5 +311,280 @@ namespace TVGL
 
         }
 
+
+        #region Flattening/Unrolling/Developing the cone
+        /// <summary>
+        /// To fulfill the necessary override, we call a much more involved method that takes in
+        /// 3D polygons and returns dictionaries and polygons. Here it is assumed that the input
+        /// points are not a closed path.
+        /// <param name="points">The ordered points on the cone.</param>
+        /// <returns>The points on the developed (flattened) cone.</returns>
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
+          => TransformFrom3DTo2D([new Polygon3D(points, false)], out _, out _).First().Path;
+
+        /// <summary>
+        /// Transforms the from 3d to 2d.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>Vector2.</returns>
+        public override Vector2 TransformFrom3DTo2D(Vector3 point)
+            => TransformPoint(point, Math.Abs(sinAperture) * Math.Tau, Math.Abs(sinAperture) * Math.PI, out _, out _);
+
+        /// <summary>
+        /// Create polygons that are unrolled versions of the 3D polygons on the cone and link each source 3D point
+        /// to the actual <see cref="Vertex2D"/> retained by the resulting polygon.
+        /// </summary>
+        /// <param name="cone">The cone on which the point sets lie.</param>
+        /// <param name="pointSets">The ordered 3D paths to develop.</param>
+        /// <param name="IsClosedSet">Whether each corresponding point set is closed.</param>
+        /// <param name="pointToVertexMap">
+        /// Maps each source 3D point to its resulting polygon vertex. If polygon tolerance combines source points,
+        /// each combined source point maps to the same retained vertex.
+        /// </param>
+        /// <param name="newVertexSpacing">Spacing for vertices added along the cone seam.</param>
+        /// <returns>The developed polygons and their enclosure/seam metadata.</returns>
+        public List<Polygon> TransformFrom3DTo2D(IEnumerable<Polygon3D> polygon3Ds,
+            out Dictionary<Vertex2D, Vertex2D> MatchingSeamVertices,
+            out Dictionary<Vector3, Vertex2D> VertexMapping, double newVertexSpacing = -1.0)
+        {
+            var repeatAngle = Math.Abs(sinAperture) * Math.Tau;
+            var halfRepeatAngle = 0.5 * repeatAngle;
+            var allResults = new List<Polygon>();
+            var properPolygonTrees = new List<Polygon>();
+            var sortedStraddleHoles = new SortedList<double, (List<Vertex2D> vertex2Ds, int loopID)>();
+            VertexMapping = new Dictionary<Vector3, Vertex2D>();
+            MatchingSeamVertices = new Dictionary<Vertex2D, Vertex2D>();
+            var encirclingLoops = new SortedList<double, (List<Vertex2D> vertex2Ds, bool windsPositive, int loopID)>();
+            var transform2D = Axis.TransformToXYPlane(out var backTransform);
+            var loopID = 0;
+            foreach (var poly3 in polygon3Ds)
+            {
+                bool? isClosed = null;
+                foreach (var path in poly3.AllPaths())
+                {
+                    if (!isClosed.HasValue) isClosed = poly3.IsClosed;
+                    else isClosed = true;
+                    var windingAngle = MiscFunctions.FindWindingAroundAxis(path, transform2D, Apex, out var minAngle,
+                        out var maxAngle, isClosed.Value);
+                    var encirclesAxis = isClosed.Value && Math.Abs(windingAngle) > 1.67 * Math.PI;
+
+                    // there are 3 types of results:
+                    // 1. a closed path that does not encircle the axis. Imagine drawing a loop on the side of the cylinder
+                    // 2. a closed path that does encircle the axis - this will be an open polygon where the
+                    //    ends are offset by 2π*Radius in the x-direction
+                    // 3. an open path - this will be an open polygon
+                    var transformedPoints = TransformPoints(path, repeatAngle, halfRepeatAngle, out minAngle, out maxAngle);
+                    var pointList2D = new Vertex2D[path.Count].ToList();
+                    for (int i = 0; i < pointList2D.Count; i++)
+                    {
+                        var point3D = path[i];
+                        var vertex2D = new Vertex2D(transformedPoints[i], i, loopID);
+                        pointList2D[i] = vertex2D;
+                        VertexMapping.Add(point3D, vertex2D);
+                    }
+                    // there are 3 types of results:
+                    // 1. a closed path that does not encircle the axis. Imagine drawing a loop on the side of the cylinder
+                    // 2. a closed path that does encircle the axis - this will be an open polygon where the
+                    //    ends are offset by 2π*Radius in the x-direction
+                    // 3. an open path - this will be an open polygon
+                    if (encirclesAxis)
+                        // store for later in a sorted list by the lower of the endpoint y-values
+                        encirclingLoops.Add(Math.Min(pointList2D[0].Coordinates.LengthSquared(),
+                            pointList2D[^1].Coordinates.LengthSquared()), (pointList2D, windingAngle > 0, loopID));
+                    else if (isClosed.Value)
+                    {   // closed but not encircling => these are holes.
+                        // maxAngle cannot be greater than Pi (or less than -Pi), but minAngle can be less than -Pi. If it is,
+                        // then so, then the polygon straddles the seam
+                        if (minAngle < -halfRepeatAngle)
+                        {
+                            var rot2D = Matrix3x3.CreateRotation(repeatAngle);
+                            for (int i = 0; i < pointList2D.Count; i++)
+                                pointList2D[i].Coordinates = pointList2D[i].Coordinates.Transform(rot2D);
+
+                            sortedStraddleHoles.Add(pointList2D.Min(p => p.Coordinates.LengthSquared()),
+                                (pointList2D, loopID));
+                        }
+                        if (maxAngle > halfRepeatAngle)
+                        {
+                            sortedStraddleHoles.Add(pointList2D.Min(p => p.Coordinates.LengthSquared()),
+                                (pointList2D, loopID));
+                        }
+                        else
+                            properPolygonTrees.Add(new Polygon(pointList2D, loopID, true));
+                    }
+                    else // hopeless open path, so we will return it now
+                        allResults.Add(new Polygon(pointList2D, loopID, false));
+                    loopID++;
+                }
+            }
+
+            // now to handle the encircling loops. They are sorted by distance from the apex, so that the innermost loop is first.
+            if (encirclingLoops.Count > 0)
+            {
+                var straddleHoleWorkingIndex = 0;
+                if (!encirclingLoops.Values[0].windsPositive)
+                {   // loop encloses infinite fat end of the cone. Not great, but throw it in the allResults list and move on. 
+                    allResults.Add(new Polygon(encirclingLoops.Values[0].vertex2Ds, encirclingLoops.Values[0].loopID, true));
+                    encirclingLoops.RemoveAt(0);
+                }
+                if (encirclingLoops.Count == 1) // && windsPositive is true
+                {   // then loop is enclosing the apex of the cone 
+                    var straddleHoles = GetStraddlingHoles(sortedStraddleHoles,
+                        ref straddleHoleWorkingIndex, 0, encirclingLoops.Keys[0]);
+                    Polygon p = MakeConePolygon(Array.Empty<Vertex2D>(),encirclingLoops.Values[0].loopID,
+                        encirclingLoops.Values[0].vertex2Ds, repeatAngle,
+                        halfRepeatAngle, newVertexSpacing, straddleHoles, MatchingSeamVertices, VertexMapping);
+                    properPolygonTrees.Add(p);
+                    encirclingLoops.RemoveAt(0);
+                }
+                // now for the rest of the encircling loops, we will combine them into pairs, and each pair will be a closed polygon
+                for (int i = 1; i < encirclingLoops.Count; i += 2)
+                {
+                    var innerLoop = encirclingLoops.Values[i - 1];
+                    var outerLoop = encirclingLoops.Values[i];
+                    var straddleHoles = GetStraddlingHoles(sortedStraddleHoles,
+                        ref straddleHoleWorkingIndex, encirclingLoops.Keys[i - 1], encirclingLoops.Keys[i]);
+                    Polygon p = MakeConePolygon(innerLoop.vertex2Ds,innerLoop.loopID, outerLoop.vertex2Ds,
+                        repeatAngle, halfRepeatAngle, newVertexSpacing, straddleHoles, MatchingSeamVertices, VertexMapping);
+                    properPolygonTrees.Add(p);
+                }
+                // finally, if there is an odd number of encircling loops, then the last one will be an open polygon
+                if (int.IsOddInteger(encirclingLoops.Count))
+                    allResults.Add(new Polygon(encirclingLoops.Values[^1].vertex2Ds, encirclingLoops.Values[^1].vertex2Ds[0].LoopID, false));
+            }
+            properPolygonTrees = properPolygonTrees.CreateShallowPolygonTrees(false);
+            // now we need to resolve the straddling holes. They are holes that straddle the seam, so they need to be split into
+            // two pieces, one on each side of the seam. The two pieces will be connected by a seam edge, and the two pieces will
+            // be added to the properPolygonTrees list.
+            allResults.AddRange(properPolygonTrees);
+            return allResults;
+        }
+
+        private Vector2 TransformPoint(Vector3 pt, double repeatAngle,
+            double halfRepeatAngle, out double radius, out double angle)
+        {
+            // In the developed cone, distance from the apex is the slant distance. Developing the cone is an
+            // isometry, so this radial coordinate is simply the length of the 3D apex-to-point vector.
+            var pointOnCone = ClosestPointOnSurfaceToPoint(pt);
+            var v = pointOnCone - Apex;
+            radius = v.Length();
+            // Find the point's azimuth around the 3D cone. Multiplying that azimuth by sinAperture compresses
+            // one full 3D revolution into the angular width of the developed sector described above.
+            var x = SectorCenterDirection.Dot(v);
+            var y = SectorYDirection.Dot(v);
+            angle = Math.Atan2(y, x) * sinAperture; // recall that Atan2 returns -pi to +pi,
+                                                    // sinAperture attenuates this so that a gap
+                                                    // or seam is left...centered at 180 degrees
+            return new Vector2(radius * Math.Cos(angle), radius * Math.Sin(angle));
+        }
+        private Vector2[] TransformPoints(IList<Vector3> points, double repeatAngle,
+            double halfRepeatAngle, out double minAngle, out double maxAngle)
+        {
+            minAngle = double.PositiveInfinity;
+            maxAngle = double.NegativeInfinity;
+            var result = new Vector2[points.Count];
+            var prevAngle = 0.0;
+            for (int i = 0; i < points.Count; i++)
+            {
+                var this2DPoint = TransformPoint(points[i], repeatAngle, halfRepeatAngle,
+                    out var radius, out var angle);
+                var angleAltered = false;
+                while (angle - prevAngle > halfRepeatAngle)
+                {
+                    angle -= repeatAngle;
+                    angleAltered = true;
+                }
+                while (prevAngle - angle > halfRepeatAngle)
+                {
+                    angle += repeatAngle;
+                    angleAltered = true;
+                }
+                if (minAngle > angle) minAngle = angle;
+                if (maxAngle < angle) maxAngle = angle;
+                if (angleAltered)
+                    result[i] = new Vector2(angle * radius, this2DPoint.Y);
+                else result[i] = this2DPoint;
+                prevAngle = angle;
+            }
+            return result;
+        }
+
+
+
+
+        private static Polygon MakeConePolygon(IList<Vertex2D> innerLoop,int loopID IList<Vertex2D> outerLoop, double repeatAngle,
+            double halfRepeatAngle, double newVertexSpacing, List<(List<Vertex2D> vertex2Ds, int loopID)> straddleHoles,
+            Dictionary<Vertex2D, Vertex2D> matchingSeamVertices, Dictionary<Vector3, Vertex2D> vertexMapping)
+        {
+            var cosGap = Math.Cos(halfRepeatAngle);
+            var sinGap = Math.Sin(halfRepeatAngle);
+            double rmsLength = (newVertexSpacing > 0) ? newVertexSpacing :
+                Cylinder.GetRootMeanSquareEdgeLength(innerLoop, outerLoop);
+            if (double.IsNaN(newVertexSpacing))
+                newVertexSpacing = double.MaxValue;
+            else if (newVertexSpacing <= 0)
+                newVertexSpacing = rmsLength;
+            var innerLoopWasEmpty = innerLoop.Count == 0;
+            if (innerLoopWasEmpty)
+                innerLoop = [new Vertex2D(Vector2.Zero, 0, loopID)];
+            else
+                ArrangeConeLoopAtSeam(innerLoop, shouldIncrease: false);
+
+            ArrangeConeLoopAtSeam(outerLoop, shouldIncrease: true);
+            // The closing edge of each arranged loop is the edge cut by the seam. Intersect that edge with one
+            // sector border and use the same radius for both copies. This creates true duplicate 3D points instead
+            // of projecting the two neighboring samples independently onto the two borders.
+            var outerSeamRadius = GetConeSeamRadius(outerLoop, repeatAngle, halfRepeatAngle, isIncreasing: true);
+            var outerTop = new Vector2(outerSeamRadius * cosGap, outerSeamRadius * sinGap);
+            var outerBtm = new Vector2(outerSeamRadius * cosGap, -outerSeamRadius * sinGap);
+            outerLoop.Insert(0, outerBtm);
+
+            Vector2 innerTop;
+            Vector2 innerBtm;
+            if (innerLoopWasEmpty)
+            {
+                innerTop = innerLoop[0];
+                innerBtm = innerLoop[^1];
+            }
+            else
+            {
+                var innerSeamRadius = GetConeSeamRadius(innerLoop, repeatAngle, halfRepeatAngle,
+                    isIncreasing: false);
+                innerTop = new Vector2(innerSeamRadius * cosGap, innerSeamRadius * sinGap);
+                innerBtm = new Vector2(innerSeamRadius * cosGap, -innerSeamRadius * sinGap);
+                innerLoop.Insert(0, innerTop);
+                innerLoop.Add(innerBtm);
+            }
+
+            var polygonPoints = new List<Vertex2D> { new Vertex2D(outerTop, -1, outerLoopID) };
+            var topDistance = outerTop.Distance(innerTop);
+            var btmDistance = outerBtm.Distance(innerBtm);
+            var numPointsToAdd = Math.Max(1,
+                (int)Math.Ceiling(Math.Max(topDistance, btmDistance) / newVertexSpacing));
+            for (int j = 1; j < numPointsToAdd; j++)
+            {
+                var fraction = (double)j / numPointsToAdd;
+                polygonPoints.Add(new Vertex2D(outerTop + fraction * (innerTop - outerTop), -1,
+                    outerLoopID));
+            }
+            numRepeats = polygonPoints.Count + 1;
+            polygonPoints.AddRange(innerLoop.Select(p => new Vertex2D(p, -1, innerLoopID)));
+            indexMatchedToStart = polygonPoints.Count;
+            for (int j = 1; j < numPointsToAdd; j++)
+            {
+                var fraction = (double)j / numPointsToAdd;
+                polygonPoints.Add(new Vertex2D(innerBtm + fraction * (outerBtm - innerBtm), -1,
+                    innerLoopID));
+            }
+            polygonPoints.AddRange(outerLoop.Select(p => new Vertex2D(p, -1, outerLoopID)));
+            //Presenter.ShowAndHang(new Polygon(polygonPoints, isClosed: true));
+            return new Polygon(polygonPoints, outerLoopID, true);
+        }
+        private static List<(List<Vertex2D> vertex2Ds, int loopID)> GetStraddlingHoles(SortedList<double, (List<Vertex2D> vertex2Ds, int loopID)> straddlingHoles,
+            ref int workingIndex, double lowR, double highR)
+        {
+            throw new NotImplementedException();
+        }
+        #endregion
     }
 }

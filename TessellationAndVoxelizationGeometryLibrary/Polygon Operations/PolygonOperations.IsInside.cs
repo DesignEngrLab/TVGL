@@ -34,7 +34,7 @@ namespace TVGL
         /// <param name="maxAngle">the maximum angle. it is not necessarily the minAngle + totalAnlge</param>
         /// <returns>totalAngle</returns>
         public static double GetWindingAngles(this Polygon polygon, Vector2 center, out double minAngle, out double maxAngle)
-            => polygon.Path.GetWindingAngles(center, true, out minAngle, out maxAngle);
+            => polygon.Path.GetWindingAngles(center, polygon.IsClosed, out minAngle, out maxAngle);
 
         /// <summary>
         /// Gets the winding number of a point with respect to a polygon. Like the winding number, but in terms
@@ -61,6 +61,8 @@ namespace TVGL
             {
                 var nextVector = coord - center;
                 var angleDelta = Math.Atan2(prevVector.Cross(nextVector), prevVector.Dot(nextVector));
+                // why not just take the angle from nextVector? Because the angle may be outside the range [-π, π]
+                // This allows us to build up the total angle correctly.
                 angle += angleDelta;
                 if (minAngle > angle) minAngle = angle;
                 if (maxAngle < angle) maxAngle = angle;
@@ -72,12 +74,12 @@ namespace TVGL
                 minAngle += Math.Tau;
                 maxAngle += Math.Tau;
             }
-            while (minAngle > Math.PI)
+            while (maxAngle > Math.PI)
             {
                 minAngle -= Math.Tau;
                 maxAngle -= Math.Tau;
             }
-            return Math.Abs(totalAngle);
+            return totalAngle;
         }
 
 
