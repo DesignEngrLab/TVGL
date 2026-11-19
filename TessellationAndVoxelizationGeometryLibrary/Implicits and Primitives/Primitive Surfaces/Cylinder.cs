@@ -13,9 +13,7 @@
 // ***********************************************************************
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Threading;
 
 
 
@@ -404,172 +402,411 @@ namespace TVGL
             return result;
         }
 
-        /// <summary>
-        /// To fulfill the necessary override, we call a much more involved method that takes in
-        /// 3D polygons and returns dictionaries and polygons. Here it is assumed that the input
-        /// points are not a closed path.
-        /// <param name="points">The ordered points on the cone.</param>
-        /// <returns>The points on the developed (flattened) cone.</returns>
+        /// <summary>Develops an open path continuously around the cylinder.</summary>
+        /// <param name="points">The 3D points in traversal order.</param>
+        /// <returns>Developed points with successive angles unwrapped as the path crosses the seam.</returns>
         public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
-          => TransformFrom3DTo2D([new Polygon3D(points, false)], out _, out _).First().Path;
+            => TransformPoints(points as IList<Vector3> ?? points.ToList());
 
-        /// <summary>
-        /// Creates the polygons that are drawn on the cylinder.
-        /// </summary>
-        /// <param name="polyon3Ds"></param>
-        /// <param name="defineSeam"></param>
-        /// <param name="VertexMapping"></param>
-        /// <param name="newVertexSpacing"></param>
-        /// <returns></returns>
-        public List<Polygon> TransformFrom3DTo2D(IEnumerable<Polygon3D> polyon3Ds,
+        /// <summary>Develops cylinder outlines and their holes into polygons that can be triangulated in 2D.</summary>
+        /// <param name="polygon3Ds">The input outlines, including any holes grouped with each outline.</param>
+        /// <param name="MatchingSeamVertices">
+        /// A two-way map between distinct retained vertices that represent the same 3D point on the
+        /// artificial cut. The two vertices can belong to different output polygons.
+        /// </param>
+        /// <param name="VertexMapping">
+        /// Maps each retained original 3D point to one of its actual vertex instances in the output.
+        /// Use <paramref name="MatchingSeamVertices"/> to find its other copy, if present.
+        /// </param>
+        /// <param name="newVertexSpacing">
+        /// Maximum spacing for subdivisions along shared seam intervals. A nonpositive value uses
+        /// the root mean square edge length of the winding rings, when available.
+        /// Use <c>double.NaN</c> to keep seam breakpoints without adding spacing-based subdivisions.
+        /// </param>
+        /// <param name="cutStandaloneOutlines">
+        /// True to cut each standalone closed outline into the fixed strip. False to let independent
+        /// contours form bands or stay continuous. Outlines with explicit holes are handled together.
+        /// </param>
+        /// <returns>
+        /// Developed polygon pieces with any enclosed holes attached, together with continuously developed open paths.
+        /// A hole crossing the seam becomes part of the cut boundary.
+        /// </returns>
+        /// <remarks>
+        /// The strip runs from X = 0 to X = one circumference. Both edges represent the same line
+        /// on the cylinder in the radial direction of <see cref="PerpXDir"/>. Y measures signed
+        /// axial distance from <see cref="Anchor"/>.
+        /// </remarks>
+        public List<Polygon> TransformFrom3DTo2D(IEnumerable<Polygon3D> polygon3Ds,
             out Dictionary<Vertex2D, Vertex2D> MatchingSeamVertices,
-            out Dictionary<Vector3, Vertex2D> VertexMapping, double newVertexSpacing = -1.0)
+            out Dictionary<Vector3, Vertex2D> VertexMapping, double newVertexSpacing = -1.0,
+            bool cutStandaloneOutlines = false)
         {
-            var listOf3DPolygons = polyon3Ds as IList<Polygon3D> ?? polyon3Ds.ToList();
-            var allResults = new List<Polygon>();
-            var properPolygonTrees = new List<Polygon>();
-            var sortedStraddleHoles = new SortedList<double, (List<Vertex2D> vertex2Ds, int loopID)>();
-            VertexMapping = new Dictionary<Vector3, Vertex2D>();
-            MatchingSeamVertices = new Dictionary<Vertex2D, Vertex2D>();
-            var encirclingLoops = new SortedList<double, (List<Vertex2D> vertex2Ds, bool windsPositive, int loopID)>();
+            MatchingSeamVertices = new();
+            VertexMapping = new();
+            var result = new List<Polygon>();
             var circumference = Math.Tau * Radius;
-            var transform2D = Axis.TransformToXYPlane(out var backTransform);
+            var frame = Axis.TransformToXYPlane(out _);
             var loopID = 0;
-            foreach (var poly3 in listOf3DPolygons)
+            foreach (var (batch, grouped) in DevelopmentBatches(polygon3Ds, cutStandaloneOutlines))
             {
-                bool? isClosed = null;
-                foreach (var path in poly3.AllPaths())
+                var rings = new List<List<Vertex2D>>();
+                var contours = new List<(int index, Vector2[] path, IList<Vector3> source, bool hole)>();
+                var sourcePoints = new List<(Vector3 source, Vector2 point)>();
+                var ringSources = new List<(Vector3 source, Vertex2D vertex)>();
+                var pieces = new List<Polygon>();
+                var loose = new List<Polygon>();
+                var cutters = new List<Polygon>();
+                foreach (var outline in batch)
                 {
-                    if (!isClosed.HasValue) isClosed = poly3.IsClosed;
-                    // given that second, thirc, etc. paths in a polygon3D are holes, then
-                    // they are necessarily closed. So, this is a little logic puzzle making
-                    // isClosed start as null, then subsequent paths are all marked as true
-                    else isClosed = true;
-                    var windingAngle = MiscFunctions.FindWindingAroundAxis(path, transform2D, Anchor, out var minAngle,
-                        out var maxAngle, isClosed.Value);
-                    // even if there is a crazy helical shaped hole that first wraps around a dozen times. The winding angle
-                    // should be 0 if it comes back the other way.
-                    var encirclesAxis = isClosed.Value && Math.Abs(windingAngle) > 1.67 * Math.PI;
-
-                    // Use the path overload so angular coordinates are unwrapped continuously across the
-                    // Atan2 branch cut. Transforming each point independently folds a full encircling loop
-                    // back into the principal interval and prevents its two boundaries from being paired.
-                    var transformedPoints = TransformPoints(path, circumference);
-                    var pointList2D = new Vertex2D[path.Count].ToList();
-                    for (int i = 0; i < pointList2D.Count; i++)
+                    var hole = false;
+                    foreach (var path in outline.AllPaths())
                     {
-                        var point3D = path[i];
-                        var vertex2D = new Vertex2D(transformedPoints[i], i, loopID);
-                        pointList2D[i] = vertex2D;
-                        VertexMapping.Add(point3D, vertex2D);
-                    }
-                    // there are 3 types of results:
-                    // 1. a closed path that does not encircle the axis. Imagine drawing a loop on the side of the cylinder
-                    // 2. a closed path that does encircle the axis - this will be an open polygon where the
-                    //    ends are offset by 2π*Radius in the x-direction
-                    // 3. an open path - this will be an open polygon
-                    if (encirclesAxis)
-                        // store for later in a sorted list by the lower of the endpoint y-values
-                        encirclingLoops.Add(Math.Min(pointList2D[0].Y, pointList2D[^1].Y), (pointList2D, windingAngle > 0, loopID));
-                    else if (isClosed.Value)
-                    {   // closed but not encircling => these are holes.
-                        // maxAngle cannot be greater than Pi (or less than -Pi), but minAngle can be less than -Pi. If it is,
-                        // then so, then the polygon straddles the seam
-                        if (minAngle < -Math.PI)
-                            sortedStraddleHoles.Add(pointList2D.Min(p => p.Y), (pointList2D, loopID));
+                        var index = loopID++;
+                        var closed = hole || outline.IsClosed;
+                        if (path.Count == 0) { hole = true; continue; }
+                        var points = TransformPoints(path);
+                        if (!closed)
+                        {
+                            AddOpenPath(path, points, index, result, VertexMapping);
+                        }
+                        else if (Math.Abs(path.FindWindingAroundAxis(frame, Anchor, out _, out _)) > 1.67 * Math.PI)
+                        {
+                            var ring = points.Select((point, i) => new Vertex2D(point, i, index)).ToList();
+                            ringSources.AddRange(path.Zip(ring));
+                            rings.Add(ring);
+                        }
                         else
-                            properPolygonTrees.Add(new Polygon(pointList2D, loopID, true));
+                            contours.Add((index, points, path, hole));
+                        hole = true;
                     }
-                    else // hopeless open path, so we will return it now
-                        allResults.Add(new Polygon(pointList2D, loopID, false));
-                    loopID++;
                 }
-            }
 
-            // now to handle the encircling loops.
-            // if the first one is going the wrong way, then it is not a proper enclosure of the cylinder, and we will consider it an open polygon
-            if (encirclingLoops.Count > 0 && !encirclingLoops.Values[0].windsPositive)
-            {
-                allResults.Add((new Polygon(encirclingLoops.Values[0].vertex2Ds, encirclingLoops.Values[0].loopID, true)));
-                encirclingLoops.RemoveAt(0);
-            }
-            // now for the rest of the encircling loops, we will combine them into pairs, and each pair will be a closed polygon
-            var straddleHoleWorkingIndex = 0;
-            for (int i = 1; i < encirclingLoops.Count; i += 2)
-            {
-                var straddleHoles = GetCylinderStraddlingHoles(sortedStraddleHoles, ref straddleHoleWorkingIndex,
-                    encirclingLoops.Keys[i - 1], encirclingLoops.Keys[i]);
-                // because the straddle holes are between the two loops and there are no intersections,
-                // there order is useful in splitting and adding to the sides of the seam.
-                var btmLoop = encirclingLoops.Values[i - 1];
-                loopID = btmLoop.vertex2Ds[0].LoopID;
-                if (!btmLoop.windsPositive)
-                    throw new ArgumentException("The bottom loop of a pair must wind positively around the cylinder.");
-                MoveSingleTurnLoopIntoCylinderStrip(btmLoop.vertex2Ds, circumference, increasing: true);
-
-                var topLoop = encirclingLoops.Values[i];
-                if (topLoop.windsPositive)
-                    throw new ArgumentException("The top loop of a pair must wind negatively around the cylinder.");
-                MoveSingleTurnLoopIntoCylinderStrip(topLoop.vertex2Ds, circumference, increasing: false);
-
-                // Intersect each loop's closing edge with the seam once, then use the same height on both
-                // developed copies. The paired seam vertices must roll back to one physical 3D point.
-                var lowerSeamY = GetCylinderSeamHeight(btmLoop.vertex2Ds, circumference, true);
-                var upperSeamY = GetCylinderSeamHeight(topLoop.vertex2Ds, circumference, false);
-                // todo:need to plan for the straddle holes starting here.
-                var seamVertexSpacing = double.IsNaN(newVertexSpacing)
-                    ? double.PositiveInfinity
-                    : newVertexSpacing > 0
-                        ? newVertexSpacing
-                        : GetRootMeanSquareEdgeLength(btmLoop.vertex2Ds, topLoop.vertex2Ds);
-                var seamHeight = upperSeamY - lowerSeamY;
-                var lastIndexOnSeam = 1 + (int)(seamHeight / seamVertexSpacing);
-                var stepSize = seamHeight / lastIndexOnSeam;
-
-                // build the new polygon starting with the upperLeft
-                var polygonPoints = new List<Vertex2D>();
-                var k = 0;
-                for (int j = 0; j < lastIndexOnSeam; j++)
+                // Each pair of winding rings bounds a band. The lower and upper paths run in
+                // opposite directions so the strip boundary can join them at each seam edge.
+                rings = rings.OrderBy(ring => ring.Average(vertex => vertex.Y)).ToList();
+                for (var i = 1; i < rings.Count; i += 2)
                 {
-                    var y = upperSeamY - j * stepSize;
-                    polygonPoints.Add(new Vertex2D(new Vector2(0, y), k++, loopID));
+                    var bottom = rings[i - 1];
+                    var top = rings[i];
+                    if (bottom[^1].X < bottom[0].X) bottom.Reverse();
+                    if (top[^1].X > top[0].X) top.Reverse();
+                    MoveSingleTurnLoopIntoCylinderStrip(bottom, circumference, true);
+                    MoveSingleTurnLoopIntoCylinderStrip(top, circumference, false);
+                    var lower = GetCylinderSeamHeight(bottom, circumference, true);
+                    var upper = GetCylinderSeamHeight(top, circumference, false);
+                    var loop = new List<Vector2> { new(0, upper), new(0, lower) };
+                    loop.AddRange(bottom.Where(v => !OnCorner(v, lower)).Select(v => v.Coordinates));
+                    loop.Add(new Vector2(circumference, lower));
+                    loop.Add(new Vector2(circumference, upper));
+                    loop.AddRange(top.Where(v => !OnCorner(v, upper)).Select(v => v.Coordinates));
+                    pieces.Add(new Polygon(loop, bottom[0].LoopID) { IsPositive = true });
                 }
-                polygonPoints.Add(new Vertex2D(new Vector2(0, lowerSeamY), k++, loopID));
-
-                polygonPoints.AddRange(btmLoop.vertex2Ds);
-                var indexMatchedToStart = polygonPoints.Count;
-                for (int j = 0; j < lastIndexOnSeam; j++)
+                if (rings.Count % 2 != 0)
                 {
-                    var y = lowerSeamY + j * stepSize;
-                    var vRight = new Vertex2D(new Vector2(circumference, y), k++, loopID);
-                    var vLeft = polygonPoints[lastIndexOnSeam - j];
-                    polygonPoints.Add(vRight);
-                    MatchingSeamVertices.Add(vRight, vLeft);
-                    MatchingSeamVertices.Add(vLeft, vRight);
+                    var ring = rings[^1];
+                    loose.Add(new Polygon(ring, ring[0].LoopID));
                 }
-                // todo: end of straddle holes new code
-                var vUpperRight = new Vertex2D(new Vector2(circumference, upperSeamY), k++, loopID);
-                MatchingSeamVertices.Add(vUpperRight, polygonPoints[0]);
-                MatchingSeamVertices.Add(polygonPoints[0], vUpperRight);
-                polygonPoints.AddRange(topLoop.vertex2Ds);
-                foreach (var v in topLoop.vertex2Ds)
-                    v.LoopID = loopID;
+                // The ring vertices now hold strip coordinates, which the output polygons will use.
+                sourcePoints.AddRange(ringSources.Select(pair => (pair.source, pair.vertex.Coordinates)));
 
-                // Now we can create the polygon
-                properPolygonTrees.Add(new Polygon(polygonPoints, loopID, true));
+                var overlap = SeamTolerance(pieces) * 4;
+                foreach (var (index, path, source, hole) in contours)
+                {
+                    if (!grouped && pieces.Count == 0)
+                    {
+                        loose.Add(new Polygon(path, index));
+                        sourcePoints.AddRange(source.Zip(path));
+                        continue;
+                    }
+                    // Clip for placement and containment. A hole is then subtracted using
+                    // the full translated cutter so it reaches the edge of the band.
+                    var fragments = CutCylinderContour(path, circumference, index, 0);
+                    if (grouped && !hole)
+                        pieces.AddRange(fragments);
+                    else if (grouped || IsInsideBand(pieces, fragments))
+                        cutters.AddRange(CutCylinderContour(path, circumference, index, overlap));
+                    else
+                    {
+                        loose.Add(new Polygon(path, index));
+                        sourcePoints.AddRange(source.Zip(path));
+                        continue;
+                    }
+                    // Record both representatives of a source sample on the seam. Either
+                    // one can survive clipping, and the source map only needs one.
+                    for (var i = 0; i < path.Length; i++)
+                    {
+                        var x = path[i].X - circumference * Math.Floor(path[i].X / circumference);
+                        sourcePoints.Add((source[i], new Vector2(x, path[i].Y)));
+                        if (Math.Abs(x) <= overlap || Math.Abs(x - circumference) <= overlap)
+                            sourcePoints.Add((source[i], new Vector2(x < circumference / 2 ? circumference : 0, path[i].Y)));
+                    }
+                }
+                var spacing = newVertexSpacing <= 0 && rings.Count > 0
+                    ? GetRootMeanSquareEdgeLength<Vertex2D>(rings) : newVertexSpacing;
+                result.AddRange(CompleteSeamCuts(pieces, cutters, sourcePoints, spacing,
+                    (side, height) => new Vector2(side * circumference, height), (point, _) => point.Y,
+                    MatchingSeamVertices, VertexMapping));
+                var looseTrees = loose.CreateShallowPolygonTrees(false);
+                AddRetainedSourceVertices(looseTrees, sourcePoints, SeamTolerance(looseTrees), VertexMapping);
+                result.AddRange(looseTrees);
+
+                bool OnCorner(Vertex2D vertex, double height) =>
+                    Math.Abs(vertex.X) <= Constants.BaseTolerance && Math.Abs(vertex.Y - height) <= Constants.BaseTolerance;
             }
-            // finally, if there is an odd number of encircling loops, then the last one will be an open polygon
-            if (int.IsOddInteger(encirclingLoops.Count))
-                allResults.Add(new Polygon(encirclingLoops.Values[^1].vertex2Ds, encirclingLoops.Values[^1].vertex2Ds[0].LoopID, true));
-            properPolygonTrees = properPolygonTrees.CreateShallowPolygonTrees(false);
-            // now we need to resolve the straddling holes. They are holes that straddle the seam, so they need to be split into
-            // two pieces, one on each side of the seam. The two pieces will be connected by a seam edge, and the two pieces will
-            // be added to the properPolygonTrees list.
-            allResults.AddRange(properPolygonTrees);
-            return allResults;
+            return result;
         }
 
-        private Vector2[] TransformPoints(IList<Vector3> points, double circumference)
+        private static List<Polygon> CutCylinderContour(Vector2[] path, double period, int index, double overlap)
+        {
+            if (path.Length < 3) return [];
+            var min = path.Min(point => point.X);
+            var max = path.Max(point => point.X);
+            var low = path.Min(point => point.Y);
+            var high = path.Max(point => point.Y);
+            var margin = Math.Max(1, high - low);
+            var first = (int)Math.Floor(min / period);
+            var last = (int)Math.Floor(max / period);
+            var window = new Polygon(new Vector2[] { new(0, low - margin), new(period, low - margin),
+                new(period, high + margin), new(0, high + margin) });
+            var pieces = new List<Polygon>();
+            for (var turn = first; turn <= last; turn++)
+            {
+                var shifted = new Polygon(path.Select(point => new Vector2(point.X - turn * period, point.Y)), index)
+                { IsPositive = true };
+                // The band's own boundary clips the cutter. Keeping its full translated contour avoids slivers.
+                if (overlap > 0 || first == last)
+                    pieces.Add(shifted);
+                else
+                    pieces.AddRange(shifted.Intersect(window).Select(piece => { piece.Index = index; return piece; }));
+            }
+            return pieces;
+        }
+
+        /// <summary>
+        /// Keeps each closed region with known holes in its own development batch. Independent contours
+        /// share a batch so their winding rings can form bands, unless each outline must be cut separately.
+        /// </summary>
+        internal static IEnumerable<(IList<Polygon3D> batch, bool grouped)> DevelopmentBatches(
+            IEnumerable<Polygon3D> polygons, bool cutStandaloneOutlines)
+        {
+            var loose = new List<Polygon3D>();
+            foreach (var polygon in polygons)
+                if (polygon.IsClosed && (cutStandaloneOutlines || polygon.Holes?.Count > 0))
+                    yield return (new[] { polygon }, true);
+                else
+                    loose.Add(polygon);
+            if (loose.Count > 0) yield return (loose, false);
+        }
+
+        internal static void AddOpenPath(IList<Vector3> path, Vector2[] points, int index,
+            List<Polygon> result, Dictionary<Vector3, Vertex2D> sourceVertices)
+        {
+            var vertices = points.Select((point, i) => new Vertex2D(point, i, index)).ToArray();
+            var polygon = new Polygon(vertices, index, false);
+            var retained = polygon.Vertices.ToHashSet();
+            for (var i = 0; i < vertices.Length; i++)
+                if (retained.Contains(vertices[i]))
+                    sourceVertices.TryAdd(path[i], vertices[i]);
+            result.Add(polygon);
+        }
+
+        internal static bool IsInsideBand(List<Polygon> bands, List<Polygon> fragments)
+        {
+            var area = fragments.Sum(p => p.Area);
+            return area > 0 && bands.Any(band =>
+                fragments.Sum(fragment => band.Intersect(fragment).Sum(p => p.Area)) >= area * (1 - 1e-5));
+        }
+
+        internal static double SeamTolerance(IEnumerable<Polygon> polygons) => Math.Max(1e-7,
+            polygons.Select(p => (p.MaxX - p.MinX + p.MaxY - p.MinY) * Constants.PolygonSameTolerance)
+                .DefaultIfEmpty().Max());
+
+        /// <summary>
+        /// Resolves candidate source coordinates to retained vertex instances after polygon construction
+        /// and clipping. Matches within the rounding tolerance preserve the original 3D coordinates.
+        /// </summary>
+        internal static void AddRetainedSourceVertices(IEnumerable<Polygon> polygons,
+            List<(Vector3 source, Vector2 point)> sourcePoints, double tolerance,
+            Dictionary<Vector3, Vertex2D> sourceVertices)
+        {
+            foreach (var loop in polygons.SelectMany(p => p.AllPolygons))
+            {
+                var byCoordinate = loop.Vertices.ToLookup(vertex => vertex.Coordinates);
+                foreach (var (source, point) in sourcePoints)
+                {
+                    if (sourceVertices.ContainsKey(source) || point.X < loop.MinX - tolerance ||
+                        point.X > loop.MaxX + tolerance || point.Y < loop.MinY - tolerance ||
+                        point.Y > loop.MaxY + tolerance)
+                        continue;
+                    var rounded = new Vector2(Math.Round(point.X, loop.NumSigDigits),
+                        Math.Round(point.Y, loop.NumSigDigits));
+                    var vertex = byCoordinate[rounded].FirstOrDefault() ??
+                        loop.Vertices.MinBy(candidate => candidate.Coordinates.DistanceSquared(point));
+                    if (vertex != null && vertex.Coordinates.Distance(point) <= tolerance)
+                        sourceVertices.Add(source, vertex);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Subtracts holes and rebuilds both copies of the cut with matching subdivisions wherever
+        /// the resulting region reaches both sides. Records pairs using the rebuilt polygon vertices.
+        /// </summary>
+        /// <param name="polygons">The developed region pieces before hole subtraction.</param>
+        /// <param name="cutters">The developed hole contours to subtract.</param>
+        /// <param name="sourcePoints">Original 3D samples and their candidate developed positions.</param>
+        /// <param name="spacing">Maximum length of a new seam subdivision when positive and finite.</param>
+        /// <param name="seamPoint">Converts a side index and seam coordinate to a developed 2D point.</param>
+        /// <param name="seamDistance">
+        /// Reads the seam coordinate on the specified side. It is axial height for a cylinder and slant
+        /// radius for a cone, so equal values on opposite sides refer to the same 3D point.
+        /// </param>
+        /// <param name="matchingSeamVertices">Receives both directions of every retained seam pair.</param>
+        /// <param name="sourceVertices">Receives mappings to the final retained vertices.</param>
+        /// <returns>The rebuilt pieces, including their modified hole and outer boundaries.</returns>
+        internal static List<Polygon> CompleteSeamCuts(List<Polygon> polygons, List<Polygon> cutters,
+            List<(Vector3 source, Vector2 point)> sourcePoints, double spacing,
+            Func<int, double, Vector2> seamPoint, Func<Vector2, int, double> seamDistance,
+            Dictionary<Vertex2D, Vertex2D> matchingSeamVertices, Dictionary<Vector3, Vertex2D> sourceVertices)
+        {
+            var preClipVertices = polygons.SelectMany(p => p.AllPolygons).SelectMany(p => p.Path).ToArray();
+            if (cutters.Count != 0)
+                polygons = polygons.Subtract(cutters);
+            var tolerance = SeamTolerance(polygons);
+            bool OnSide(Vector2 point, int side) => point.Distance(seamPoint(side, seamDistance(point, side))) <= tolerance;
+            var sides = new[] { new List<(double low, double high)>(), new List<(double low, double high)>() };
+            foreach (var loop in polygons.SelectMany(p => p.AllPolygons))
+                foreach (var edge in loop.Path.Zip(loop.Path.Skip(1).Append(loop.Path[0])))
+                    for (var side = 0; side < 2; side++)
+                        if (OnSide(edge.First, side) && OnSide(edge.Second, side))
+                        {
+                            var a = seamDistance(edge.First, side);
+                            var b = seamDistance(edge.Second, side);
+                            if (Math.Abs(a - b) > tolerance)
+                                sides[side].Add((Math.Min(a, b), Math.Max(a, b)));
+                        }
+
+            // A physical boundary can lie on the cut. Only intervals with material on both copies are welded.
+            var shared = new List<(double low, double high)>();
+            sides[0].Sort();
+            sides[1].Sort();
+            for (int i = 0, j = 0; i < sides[0].Count && j < sides[1].Count;)
+            {
+                var left = sides[0][i];
+                var right = sides[1][j];
+                var low = Math.Max(left.low, right.low);
+                var high = Math.Min(left.high, right.high);
+                if (high - low > tolerance) shared.Add((low, high));
+                if (left.high <= right.high) i++;
+                if (right.high <= left.high) j++;
+            }
+
+            // Use the same seam samples on both sides, including overlap endpoints and any
+            // original breakpoints that Boolean clipping may have discarded.
+            var candidates = shared.SelectMany(span => new[] { span.low, span.high }).ToList();
+            foreach (var point in preClipVertices.Concat(sourcePoints.Select(pair => pair.point)))
+                for (var side = 0; side < 2; side++)
+                    if (OnSide(point, side))
+                    {
+                        var distance = seamDistance(point, side);
+                        if (shared.Any(span => distance > span.low + tolerance && distance < span.high - tolerance))
+                            candidates.Add(distance);
+                    }
+            if (spacing > 0 && double.IsFinite(spacing))
+                foreach (var (low, high) in shared)
+                {
+                    var count = (int)Math.Ceiling((high - low) / spacing);
+                    for (var i = 1; i < count; i++)
+                        candidates.Add(low + (high - low) * i / count);
+                }
+            var samples = new List<double>();
+            foreach (var position in candidates.Order())
+                if (samples.Count == 0 || position - samples[^1] > tolerance)
+                    samples.Add(position);
+            // Pair by sample index after construction. A vertex shared by both sides,
+            // such as the cone apex, already has a single identity.
+            var seamVertices = new[] { new Dictionary<int, Vertex2D>(), new Dictionary<int, Vertex2D>() };
+            var boundarySamples = sourcePoints.Select(pair => pair.point).Distinct().ToArray();
+            polygons = polygons.Select(RebuildBoundary).ToList();
+            foreach (var (index, left) in seamVertices[0])
+                if (seamVertices[1].TryGetValue(index, out var right) && !ReferenceEquals(left, right))
+                {
+                    matchingSeamVertices.Add(left, right);
+                    matchingSeamVertices.Add(right, left);
+                }
+            AddRetainedSourceVertices(polygons, sourcePoints, tolerance, sourceVertices);
+            return polygons;
+
+            Polygon RebuildBoundary(Polygon loop)
+            {
+                var points = new List<Vector2>();
+                for (var i = 0; i < loop.Vertices.Count; i++)
+                {
+                    var a = loop.Vertices[i].Coordinates;
+                    var b = loop.Vertices[(i + 1) % loop.Vertices.Count].Coordinates;
+                    points.Add(a);
+                    var isCutLine = false;
+                    for (var side = 0; side < 2; side++)
+                    {
+                        if (!OnSide(a, side) || !OnSide(b, side)) continue;
+                        isCutLine = true;
+                        var from = seamDistance(a, side);
+                        var to = seamDistance(b, side);
+                        var interior = samples.Where(s => s > Math.Min(from, to) + tolerance &&
+                            s < Math.Max(from, to) - tolerance);
+                        foreach (var sample in from <= to ? interior : interior.Reverse())
+                            points.Add(seamPoint(side, sample));
+                        break;
+                    }
+                    if (isCutLine) continue;
+                    // Boolean operations can discard collinear samples. On a cylinder a straight developed
+                    // ring edge still needs those vertices to follow the circumference when it rolls back up.
+                    var v = b - a;
+                    var lengthSquared = v.LengthSquared();
+                    if (lengthSquared <= tolerance * tolerance) continue;
+                    var fractionTolerance = tolerance / Math.Sqrt(lengthSquared);
+                    var positions = new List<double>();
+                    foreach (var sample in boundarySamples)
+                    {
+                        if (sample.X < Math.Min(a.X, b.X) - tolerance || sample.X > Math.Max(a.X, b.X) + tolerance ||
+                            sample.Y < Math.Min(a.Y, b.Y) - tolerance || sample.Y > Math.Max(a.Y, b.Y) + tolerance)
+                            continue;
+                        var fraction = (sample - a).Dot(v) / lengthSquared;
+                        if (fraction > fractionTolerance && fraction < 1 - fractionTolerance &&
+                            sample.Distance(a + fraction * v) <= tolerance)
+                            positions.Add(fraction);
+                    }
+                    var previous = 0.0;
+                    foreach (var fraction in positions.Order())
+                        if (fraction - previous > fractionTolerance)
+                        {
+                            points.Add(a + fraction * v);
+                            previous = fraction;
+                        }
+                }
+                var result = new Polygon(points, loop.Index);
+                foreach (var hole in loop.InnerPolygons)
+                    result.AddInnerPolygon(RebuildBoundary(hole));
+                foreach (var vertex in result.Vertices)
+                    for (var side = 0; side < 2; side++)
+                    {
+                        if (!OnSide(vertex.Coordinates, side)) continue;
+                        var distance = seamDistance(vertex.Coordinates, side);
+                        var index = samples.BinarySearch(distance);
+                        if (index < 0)
+                        {
+                            index = ~index;
+                            if (index > 0 && distance - samples[index - 1] <= tolerance)
+                                index--;
+                        }
+                        if (index < samples.Count && Math.Abs(samples[index] - distance) <= tolerance)
+                            seamVertices[side].TryAdd(index, vertex);
+                    }
+                return result;
+            }
+        }
+
+        private Vector2[] TransformPoints(IList<Vector3> points)
         {
             // the cylinder will be unrolled, and the tangential angle around the cylinder will be transformed
             // into the x (horizontal coordinate). The first point provides a reference for the additional points
@@ -613,12 +850,6 @@ namespace TVGL
                         (loop[j - 1].Y - loop[j].Y) * (loop[j - 1].Y - loop[j].Y);
             }
             return numLengths == 0 ? double.NaN : Math.Sqrt(totalLengthSqdSum / numLengths);
-        }
-
-        private static List<(List<Vertex2D> vertex2Ds, int loopID)> GetCylinderStraddlingHoles(SortedList<double, (List<Vertex2D> vertex2Ds, int loopID)> straddlingHoles,
-            ref int workingIndex, double lowY, double highY)
-        {
-            throw new NotImplementedException();
         }
 
         private static void MoveSingleTurnLoopIntoCylinderStrip(List<Vertex2D> loop, double circumference, bool increasing)
