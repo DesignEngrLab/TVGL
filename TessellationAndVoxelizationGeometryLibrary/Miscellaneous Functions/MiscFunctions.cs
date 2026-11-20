@@ -55,7 +55,8 @@ namespace TVGL
             {
                 var result = Vector3.Zero;
                 foreach (var face in faces)
-                    result += face.Normal;
+                    if (face is not null && !face.Normal.IsNull())
+                        result += face.Normal;
                 return result.Normalize();
             }
         }

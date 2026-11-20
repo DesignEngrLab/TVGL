@@ -415,11 +415,11 @@ namespace TVGL
                 var firstRing = 0;
                 if (rings.Count > 0 && rings.Count % 2 != 0 && (grouped || rings[0].enclosesApex))
                 {
-                    pieces.Add(MakeConePolygon([], rings[0].vertices, period));
+                    pieces.AddRange(MakeConePolygons([], rings[0].vertices, period));
                     firstRing = 1;
                 }
                 for (; firstRing + 1 < rings.Count; firstRing += 2)
-                    pieces.Add(MakeConePolygon(rings[firstRing].vertices, rings[firstRing + 1].vertices, period));
+                    pieces.AddRange(MakeConePolygons(rings[firstRing].vertices, rings[firstRing + 1].vertices, period));
                 if (firstRing < rings.Count)
                 {
                     var last = rings[firstRing].vertices;
@@ -502,65 +502,111 @@ namespace TVGL
         private static double WrapAngle(double angle, double period) =>
             angle - period * Math.Floor(angle / period + 0.5);
 
-        /// <summary>Joins winding rings along the sector rays to form a band or a filled sector.</summary>
+        /// <summary>
+        /// Cuts winding rings at every seam crossing and closes the resulting boundaries along the sector rays.
+        /// </summary>
         /// <param name="inner">The inner ring, or an empty list if the sector reaches the apex.</param>
-        /// <param name="outer">The outer ring. Both nonempty rings are reordered in place at the seam.</param>
+        /// <param name="outer">The outer ring, in traversal order.</param>
         /// <param name="period">The developed angle for one revolution around the cone.</param>
-        /// <returns>A positive polygon in the fixed sector.</returns>
-        private static Polygon MakeConePolygon(List<Vertex2D> inner, List<Vertex2D> outer, double period)
+        /// <returns>One positive polygon for each connected piece in the fixed sector.</returns>
+        private static IEnumerable<Polygon> MakeConePolygons(List<Vertex2D> inner, List<Vertex2D> outer, double period)
         {
             var half = period / 2;
-            ArrangeConeLoopAtSeam(outer, true);
-            var outerRadius = GetConeSeamRadius(outer, period, true);
-            var loop = new List<Vector2> { FromPolar(half, outerRadius) };
+            var rays = new[] { FromPolar(-half, 1), FromPolar(half, 1) };
+            var sections = new List<List<Vector2>>();
+            var seamEnds = new[] { new List<(double radius, int endpoint)>(), new List<(double radius, int endpoint)>() };
+            AddRingSections(outer);
             if (inner.Count == 0)
-                loop.Add(Vector2.Zero);
+                AddSection([Vector2.Zero], 0, 0, 1, 0);
             else
+                AddRingSections(inner);
+
+            // Each crossing toggles whether the ray is inside the region. Starting at the apex
+            // (also an endpoint for a filled sector), alternate filled intervals with gaps.
+            if (seamEnds[0].Count % 2 != 0 || seamEnds[1].Count % 2 != 0)
+                yield break;
+            var connections = new int[2 * sections.Count];
+            foreach (var side in seamEnds)
             {
-                ArrangeConeLoopAtSeam(inner, false);
-                var innerRadius = GetConeSeamRadius(inner, period, false);
-                loop.Add(FromPolar(half, innerRadius));
-                loop.AddRange(inner.Select(vertex => vertex.Coordinates));
-                loop.Add(FromPolar(-half, innerRadius));
+                var ordered = side.OrderBy(end => end.radius).ToArray();
+                for (var i = 0; i < ordered.Length; i += 2)
+                {
+                    var a = ordered[i].endpoint;
+                    var b = ordered[i + 1].endpoint;
+                    connections[a] = b;
+                    connections[b] = a;
+                }
             }
-            loop.Add(FromPolar(-half, outerRadius));
-            loop.AddRange(outer.Select(vertex => vertex.Coordinates));
-            return new Polygon(loop, outer[0].LoopID) { IsPositive = true };
-        }
 
-        private static void ArrangeConeLoopAtSeam(List<Vertex2D> loop, bool increasing)
-        {
-            (int index, double delta) FindJump() => Enumerable.Range(0, loop.Count)
-                .Select(i => (index: i, delta: Angle(loop[(i + 1) % loop.Count]) - Angle(loop[i])))
-                .MaxBy(jump => Math.Abs(jump.delta));
-            // Put the wrap jump on the closing edge so the rest of the ring can be
-            // traversed in order between the two seam rays.
-            var jump = FindJump();
-            if ((jump.delta < 0) != increasing)
+            // Walk each component once. Entering at a section's end traverses it in reverse
+            // so ring orientation does not affect how the cut pieces connect.
+            var visited = new bool[sections.Count];
+            for (var i = 0; i < sections.Count; i++)
             {
-                loop.Reverse();
-                jump = FindJump();
+                if (visited[i]) continue;
+                var boundary = new List<Vector2>();
+                var endpoint = 2 * i;
+                while (!visited[endpoint / 2])
+                {
+                    var section = endpoint / 2;
+                    var path = sections[section];
+                    boundary.AddRange(endpoint % 2 == 0 ? path : Enumerable.Reverse(path));
+                    visited[section] = true;
+                    endpoint = connections[endpoint ^ 1];
+                }
+                var polygon = new Polygon(boundary, outer[0].LoopID);
+                // A ring that only touches a ray can also produce a collapsed piece.
+                if (polygon.Vertices.Count >= 3 && polygon.Area != 0)
+                {
+                    polygon.IsPositive = true;
+                    yield return polygon;
+                }
             }
-            var first = (jump.index + 1) % loop.Count;
-            if (first == 0) return;
-            var beforeSeam = loop.GetRange(0, first);
-            loop.RemoveRange(0, first);
-            loop.AddRange(beforeSeam);
-        }
 
-        private static double Angle(Vertex2D point) => Math.Atan2(point.Y, point.X);
+            void AddRingSections(List<Vertex2D> ring)
+            {
+                var angles = ring.Select(point => Math.Atan2(point.Y, point.X)).ToArray();
+                var crossings = new List<(int edge, int side, double radius)>();
+                for (var i = 0; i < ring.Count; i++)
+                {
+                    var next = (i + 1) % ring.Count;
+                    var delta = angles[next] - angles[i];
+                    if (Math.Abs(delta) <= half) continue;
+                    var side = delta < 0 ? 1 : 0;
+                    var ray = rays[side];
+                    var start = ring[i].Coordinates;
+                    // Unwrap only the far endpoint to intersect the actual developed chord with this ray.
+                    var end = FromPolar(angles[next] + (side == 1 ? period : -period), ring[next].Coordinates.Length());
+                    var chord = end - start;
+                    var divisor = chord.Cross(ray);
+                    var radius = divisor.IsNegligible() ? start.Dot(ray) :
+                        (start - start.Cross(ray) / divisor * chord).Dot(ray);
+                    crossings.Add((i, side, radius));
+                }
+                for (var i = 0; i < crossings.Count; i++)
+                {
+                    var start = crossings[i];
+                    var end = crossings[(i + 1) % crossings.Count];
+                    var path = new List<Vector2> { rays[1 - start.side] * start.radius };
+                    var vertex = start.edge;
+                    do
+                    {
+                        vertex = (vertex + 1) % ring.Count;
+                        path.Add(ring[vertex].Coordinates);
+                    } while (vertex != end.edge);
+                    path.Add(rays[end.side] * end.radius);
+                    AddSection(path, 1 - start.side, start.radius, end.side, end.radius);
+                }
+            }
 
-        private static double GetConeSeamRadius(List<Vertex2D> loop, double period, bool increasing)
-        {
-            var sign = increasing ? 1 : -1;
-            var ray = FromPolar(sign * period / 2, 1);
-            var last = loop[^1].Coordinates;
-            // Rejoin the closing edge in the same sector as its last point before intersecting the ray.
-            var equivalentFirst = FromPolar(Angle(loop[0]) + sign * period, loop[0].Coordinates.Length());
-            var edge = equivalentFirst - last;
-            var divisor = edge.Cross(ray);
-            return divisor.IsNegligible() ? last.Dot(ray) :
-                (last - last.Cross(ray) / divisor * edge).Dot(ray);
+            void AddSection(List<Vector2> path, int startSide, double startRadius, int endSide, double endRadius)
+            {
+                // Each section owns two consecutive endpoint IDs, with the start first.
+                var start = 2 * sections.Count;
+                seamEnds[startSide].Add((startRadius, start));
+                seamEnds[endSide].Add((endRadius, start + 1));
+                sections.Add(path);
+            }
         }
 
         private static List<Polygon> CutConeContour(Vector2[] polar, double period, int index, double overlap)
